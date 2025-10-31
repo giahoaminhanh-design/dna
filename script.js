@@ -1,4 +1,4 @@
-// ASEAN only, per-country colors, no basemap; Paracel/Spratly styled as part of Vietnam per user's display preference.
+// World basemap + ASEAN polygons per-country color + Paracel/Spratly colored as Vietnam
 const STATUS = document.getElementById('status');
 function showStatus(msg, isErr=false){ STATUS.textContent = msg; STATUS.style.display='block'; STATUS.style.background = isErr ? '#7f1d1d' : '#111827'; }
 
@@ -25,15 +25,15 @@ const INFO = {
   'Timor-Leste':{population:'~1.4 triệu',language:'Tetum/Bồ',culture:'Đông Timor'},
 };
 
-// No basemap
-const map = L.map('map', { zoomControl:true, scrollWheelZoom:true, minZoom:3, maxZoom:10 });
-const seaBounds = [[-15, 90],[30, 150]];
-map.setMaxBounds(seaBounds);
-map.fitBounds(seaBounds);
+// World basemap
+const map = L.map('map', { zoomControl:true, scrollWheelZoom:true, minZoom:3, maxZoom:18 });
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
 
 function nameOf(props){ return props.ADMIN || props.NAME || props.NAME_EN || props.name || props.sovereignt; }
-function styleByName(name){ return { color:'#1f2937', weight:1, fillColor: COLORS[name] || '#9ca3af', fillOpacity:0.88 }; }
-function activeStyle(name){ return { color:'#111827', weight:1.5, fillColor: COLORS[name] || '#22c55e', fillOpacity:0.98 }; }
+function styleByName(name){ return { color:'#1f2937', weight:1, fillColor: COLORS[name] || '#9ca3af', fillOpacity:0.75 }; }
+function activeStyle(name){ return { color:'#111827', weight:1.5, fillColor: COLORS[name] || '#22c55e', fillOpacity:0.95 }; }
 
 function openModal(name){
   const m = INFO[name] || {population:'—', language:'—', culture:'—'};
@@ -54,7 +54,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal()
 
 async function tryFetch(url){ const r = await fetch(url, {mode:'cors'}); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
 
-// Islands polygons displayed with Vietnam's color, labeled as belonging to Vietnam (display choice).
+// Islands polygons displayed as part of Vietnam (display choice)
 const ISLANDS = {
   "Quần đảo Hoàng Sa (Việt Nam)": {
     "type":"Feature","properties":{"name":"Vietnam"}, "geometry":{"type":"Polygon","coordinates":[[[111.2,16.1],[112.8,16.1],[112.8,17.1],[111.2,17.1],[111.2,16.1]]]}
@@ -121,12 +121,12 @@ function addIslands(){
         layer.setStyle(activeStyle(name)); layer._active=true; if (layer.bringToFront) layer.bringToFront();
         openModal(name);
       });
-      layer.on('mouseover', ()=>{ if (!layer._active){ const n=name; layer.setStyle({ fillOpacity: 0.95, fillColor: COLORS[n]||'#9ca3af' }); } });
-      layer.on('mouseout',  ()=>{ if (!layer._active){ const n=name; layer.setStyle({ fillOpacity: 0.88, fillColor: COLORS[n]||'#9ca3af' }); } });
+      layer.on('mouseover', ()=>{ if (!layer._active){ const n=name; layer.setStyle({ fillOpacity: 0.9, fillColor: COLORS[n]||'#9ca3af' }); } });
+      layer.on('mouseout',  ()=>{ if (!layer._active){ const n=name; layer.setStyle({ fillOpacity: 0.75, fillColor: COLORS[n]||'#9ca3af' }); } });
     }
   }).addTo(map);
 
   map.fitBounds(window.geoLayer.getBounds(), { padding:[20,20] });
   addIslands();
-  showStatus('Tải xong. Chỉ ASEAN, mỗi nước một màu.'); setTimeout(()=> STATUS.style.display='none', 2500);
+  showStatus('Tải xong. Nền thế giới + ASEAN nhiều màu.'); setTimeout(()=> STATUS.style.display='none', 2500);
 })();

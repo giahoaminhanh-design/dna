@@ -1,4 +1,4 @@
-ASEAN ONLY + MỖI NƯỚC MÀU RIÊNG + HIỂN THỊ HOÀNG SA/TRƯỜNG SA THUỘC VIỆT NAM (theo yêu cầu hiển thị)
+WORLD BASEMAP + ASEAN NHIỀU MÀU + HOÀNG SA/TRƯỜNG SA CÙNG MÀU VIỆT NAM
 
 Triển khai (repo giahoaminhanh-design/dna):
 1) Upload index.html, style.css, script.js (và asean.geojson nếu muốn offline) lên nhánh main (thư mục gốc /).
@@ -6,8 +6,7 @@ Triển khai (repo giahoaminhanh-design/dna):
 3) Link: https://giahoaminhanh-design.github.io/dna/
 
 Ghi chú kỹ thuật:
-- Không dùng nền bản đồ thế giới. Chỉ vẽ polygons ASEAN.
-- Màu từng nước chỉnh trong COLORS ở script.js.
-- Hai quần đảo được vẽ và gán màu như Việt Nam theo lựa chọn hiển thị của bạn.
-- Nếu cần đường biên đảo chi tiết, thay các polygon minh hoạ bằng GeoJSON cụ thể.
-- Để không phụ thuộc internet, cung cấp asean.geojson (đã lọc 11 nước) trong repo.
+- Dùng tile layer OpenStreetMap cho nền thế giới.
+- Chỉ vẽ polygons ASEAN (11 nước) đè lên nền và tô mỗi nước một màu (chỉnh trong COLORS).
+- Hai quần đảo được vẽ dưới dạng polygon và gán màu như Việt Nam theo lựa chọn hiển thị.
+- Nếu cần hoàn toàn offline, cung cấp asean.geojson (đã lọc 11 nước) trong repo (script ưu tiên file này).
