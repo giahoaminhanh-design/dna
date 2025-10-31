@@ -1,12 +1,13 @@
-ASEAN-ONLY — Chỉ hiển thị Đông Nam Á (không nền thế giới)
+ASEAN ONLY + MỖI NƯỚC MÀU RIÊNG + HIỂN THỊ HOÀNG SA/TRƯỜNG SA THUỘC VIỆT NAM (theo yêu cầu hiển thị)
 
-Cách dùng (repo giahoaminhanh-design/dna):
-1) Upload index.html, style.css, script.js (+ asean.geojson nếu muốn offline) vào nhánh main (thư mục gốc).
+Triển khai (repo giahoaminhanh-design/dna):
+1) Upload index.html, style.css, script.js (và asean.geojson nếu muốn offline) lên nhánh main (thư mục gốc /).
 2) Settings → Pages → Deploy from a branch → main / (root) → Save.
 3) Link: https://giahoaminhanh-design.github.io/dna/
 
-Nguồn dữ liệu:
-- Ưu tiên asean.geojson (nếu có, đã lọc 11 nước). Nếu file này trống/không có, script sẽ tải countries.geojson từ Internet rồi lọc ASEAN.
-- Không có tile layer nền → không hiển thị các nước ngoài ASEAN.
-
-Muốn hoàn toàn không phụ thuộc internet? Xuất asean.geojson từ mapshaper.org (lọc 11 nước) rồi upload thay file hiện tại.
+Ghi chú kỹ thuật:
+- Không dùng nền bản đồ thế giới. Chỉ vẽ polygons ASEAN.
+- Màu từng nước chỉnh trong COLORS ở script.js.
+- Hai quần đảo được vẽ và gán màu như Việt Nam theo lựa chọn hiển thị của bạn.
+- Nếu cần đường biên đảo chi tiết, thay các polygon minh hoạ bằng GeoJSON cụ thể.
+- Để không phụ thuộc internet, cung cấp asean.geojson (đã lọc 11 nước) trong repo.
