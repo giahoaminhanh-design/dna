@@ -1,14 +1,11 @@
-BẢN ĐỒ ĐÔNG NAM Á (BIÊN GIỚI THẬT) — DEPLOY THẲNG GITHUB PAGES
+FIX TRẮNG TRANG:
+- Script đã thêm 3 nguồn GeoJSON công khai (CORS mở) + fallback local asean.geojson.
+- Có hộp trạng thái báo lý do lỗi nếu không tải được dữ liệu.
 
-Cách dùng (repo: giahoaminhanh-design/dna):
-1) Tải zip này, giải nén.
-2) Upload 4 file: index.html, style.css, script.js, asean.geojson vào nhánh main (thư mục gốc /).
-3) Settings → Pages → Deploy from a branch → main / (root) → Save.
-4) Link chạy: https://giahoaminhanh-design.github.io/dna/
+Triển khai:
+1) Upload index.html, style.css, script.js, asean.geojson lên repo giahoaminhanh-design/dna (thư mục gốc).
+2) Bật Pages: main / (root).
+3) Nếu vẫn trắng trang, mở DevTools (F12) kiểm tra tab Network: các URL GeoJSON có 200/OK không.
+4) Đảm bảo không có extension chặn raw.githubusercontent.com / jsdelivr / openstreetmap.
 
-Ghi chú:
-- Mặc định script lấy GeoJSON từ:
-  https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson
-  → Sau đó lọc ra 11 nước ASEAN. Nếu vì lý do mạng/CORS mà không load được, script sẽ fallback sang file local asean.geojson.
-- Nếu muốn chắc chắn không phụ thuộc mạng ngoài, hãy tự thay file asean.geojson bằng dữ liệu ASEAN thật (GeoJSON) xuất từ mapshaper.org.
-- Tuỳ biến thông tin hiển thị trong biến INFO bên trong script.js.
+Nếu muốn không phụ thuộc mạng, thay nội dung asean.geojson bằng bộ biên giới ASEAN (GeoJSON).
