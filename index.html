@@ -1,26 +1,21 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bản đồ Đông Nam Á</title>
+  <title>Bản đồ Đông Nam Á (biên giới thật)</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="./style.css" />
-  <meta name="description" content="Bản đồ Đông Nam Á tương tác: click vào quốc gia để xem dân số, ngôn ngữ, văn hoá.">
+  <meta name="description" content="Bản đồ Đông Nam Á tương tác với biên giới quốc gia thật (GeoJSON).">
 </head>
 <body>
   <header class="site-header">
-    <h1>BẢN ĐỒ ĐÔNG NAM Á</h1>
-    <p class="subtitle">Click vào một quốc gia để xem thông tin chi tiết</p>
+    <h1>BẢN ĐỒ ĐÔNG NAM Á — BIÊN GIỚI THẬT</h1>
+    <p class="subtitle">Click vào quốc gia để nảy lên và xem thông tin</p>
   </header>
 
   <main class="layout">
-    <section class="map-card">
-      <!-- Simple stylized SEA map (not geographically exact) -->
-      <svg id="map" viewBox="250 300 300 300" aria-label="Bản đồ Đông Nam Á" role="img">
-        <!-- Countries injected by script.js -->
-      </svg>
-      <p class="note">* Bản đồ mang tính minh hoạ để demo tương tác.</p>
-    </section>
+    <div id="map" role="img" aria-label="Bản đồ Đông Nam Á"></div>
   </main>
 
   <!-- Modal -->
@@ -38,9 +33,10 @@
   </div>
 
   <footer class="site-footer">
-    <span>Made for Trường • Deploy thẳng GitHub Pages</span>
+    <span>Deploy thẳng GitHub Pages • Không cần npm</span>
   </footer>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="./script.js"></script>
 </body>
 </html>
