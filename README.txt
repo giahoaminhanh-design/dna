@@ -1,11 +1,12 @@
-FIX TRẮNG TRANG:
-- Script đã thêm 3 nguồn GeoJSON công khai (CORS mở) + fallback local asean.geojson.
-- Có hộp trạng thái báo lý do lỗi nếu không tải được dữ liệu.
+ASEAN-ONLY — Chỉ hiển thị Đông Nam Á (không nền thế giới)
 
-Triển khai:
-1) Upload index.html, style.css, script.js, asean.geojson lên repo giahoaminhanh-design/dna (thư mục gốc).
-2) Bật Pages: main / (root).
-3) Nếu vẫn trắng trang, mở DevTools (F12) kiểm tra tab Network: các URL GeoJSON có 200/OK không.
-4) Đảm bảo không có extension chặn raw.githubusercontent.com / jsdelivr / openstreetmap.
+Cách dùng (repo giahoaminhanh-design/dna):
+1) Upload index.html, style.css, script.js (+ asean.geojson nếu muốn offline) vào nhánh main (thư mục gốc).
+2) Settings → Pages → Deploy from a branch → main / (root) → Save.
+3) Link: https://giahoaminhanh-design.github.io/dna/
 
-Nếu muốn không phụ thuộc mạng, thay nội dung asean.geojson bằng bộ biên giới ASEAN (GeoJSON).
+Nguồn dữ liệu:
+- Ưu tiên asean.geojson (nếu có, đã lọc 11 nước). Nếu file này trống/không có, script sẽ tải countries.geojson từ Internet rồi lọc ASEAN.
+- Không có tile layer nền → không hiển thị các nước ngoài ASEAN.
+
+Muốn hoàn toàn không phụ thuộc internet? Xuất asean.geojson từ mapshaper.org (lọc 11 nước) rồi upload thay file hiện tại.
