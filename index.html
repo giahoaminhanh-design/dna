@@ -1,20 +1,23 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ASEAN — Tương tác (bản inline, không cần fetch)</title>
+  <title>ASEAN — Tương tác (offline, đảm bảo hiển thị)</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
   <header class="site-header">
-    <h1>Bản đồ ASEAN — Tương tác</h1>
-    <p class="subtitle">Bản này nhúng trực tiếp GeoJSON → chạy được cả khi mở file <code>index.html</code> bằng <code>file://</code></p>
+    <h1>Bản đồ ASEAN — Tương tác (Offline)</h1>
+    <p class="subtitle">Dữ liệu GeoJSON đã nhúng sẵn (hình chữ nhật đại diện từng nước để đảm bảo hiển thị)</p>
   </header>
 
   <main class="layout">
+    <div class="toolbar">
+      <input id="search" placeholder="Tìm quốc gia..." />
+      <button id="resetBtn">Reset view</button>
+    </div>
     <div id="map"></div>
     <aside class="panel" id="panel">
       <div class="panel-section">
@@ -29,21 +32,19 @@
         <p><strong>Văn hoá/ghi chú:</strong> <span id="info-culture">—</span></p>
       </div>
       <div class="panel-section tip">
-        Gợi ý: kéo phóng bản đồ, di chuột để xem tên, bấm để ghim & xem chi tiết.
+        Gợi ý: gõ tên nước để zoom, bấm polygon để xem thông tin.
       </div>
     </aside>
   </main>
 
   <footer class="site-footer">
-    <span>Deploy thẳng GitHub Pages • hoặc mở file trực tiếp đều OK</span>
+    <span>Chạy khi mở file trực tiếp • Deploy GitHub Pages đều OK</span>
   </footer>
 
   <div id="status" class="status">Đang tải…</div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-  window.__ASEAN_GEOJSON__ = {"type": "FeatureCollection", "features": []};
-  </script>
+  <script>window.__ASEAN_GEOJSON__ = {"type": "FeatureCollection", "features": [{"type": "Feature", "properties": {"NAME_0": "Vietnam"}, "geometry": {"type": "Polygon", "coordinates": [[[102.0, 8.5], [110.5, 8.5], [110.5, 23.5], [102.0, 23.5], [102.0, 8.5]]]}}, {"type": "Feature", "properties": {"NAME_0": "Thailand"}, "geometry": {"type": "Polygon", "coordinates": [[[97.0, 5.5], [106.0, 5.5], [106.0, 20.5], [97.0, 20.5], [97.0, 5.5]]]}}, {"type": "Feature", "properties": {"NAME_0": "Laos"}, "geometry": {"type": "Polygon", "coordinates": [[[100.0, 14.0], [107.8, 14.0], [107.8, 22.8], [100.0, 22.8], [100.0, 14.0]]]}}, {"type": "Feature", "properties": {"NAME_0": "Cambodia"}, "geometry": {"type": "Polygon", "coordinates": [[[102.0, 10.2], [107.8, 10.2], [107.8, 14.8], [102.0, 14.8], [102.0, 10.2]]]}}, {"type": "Feature", "properties": {"NAME_0": "Myanmar"}, "geometry": {"type": "Polygon", "coordinates": [[[92.0, 10.0], [101.5, 10.0], [101.5, 28.5], [92.0, 28.5], [92.0, 10.0]]]}}, {"type": "Feature", "properties": {"NAME_0": "Malaysia"}, "geometry": {"type": "Polygon", "coordinates": [[[99.0, 1.0], [119.0, 1.0], [119.0, 7.5], [99.0, 7.5], [99.0, 1.0]]]}}, {"type": "Feature", "properties": {"NAME_0": "Singapore"}, "geometry": {"type": "Polygon", "coordinates": [[[103.6, 1.18], [104.0, 1.18], [104.0, 1.5], [103.6, 1.5], [103.6, 1.18]]]}}, {"type": "Feature", "properties": {"NAME_0": "Indonesia"}, "geometry": {"type": "Polygon", "coordinates": [[[95.0, -11.0], [141.0, -11.0], [141.0, 6.0], [95.0, 6.0], [95.0, -11.0]]]}}, {"type": "Feature", "properties": {"NAME_0": "Philippines"}, "geometry": {"type": "Polygon", "coordinates": [[[117.0, 5.0], [126.0, 5.0], [126.0, 19.0], [117.0, 19.0], [117.0, 5.0]]]}}, {"type": "Feature", "properties": {"NAME_0": "Brunei"}, "geometry": {"type": "Polygon", "coordinates": [[[114.0, 4.0], [115.5, 4.0], [115.5, 5.2], [114.0, 5.2], [114.0, 4.0]]]}}, {"type": "Feature", "properties": {"NAME_0": "Timor-Leste"}, "geometry": {"type": "Polygon", "coordinates": [[[124.0, -10.0], [127.0, -10.0], [127.0, -8.0], [124.0, -8.0], [124.0, -10.0]]]}}]};</script>
   <script src="./script.js"></script>
 </body>
 </html>
