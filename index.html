@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bản đồ ASEAN — Click để xem bảng thông tin</title>
+  <title>Bản đồ ASEAN — Ưu tiên dữ liệu local (FIX)</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     *{box-sizing:border-box}html,body{margin:0;padding:0;height:100%}
@@ -30,8 +30,8 @@
 </head>
 <body>
   <header>
-    <h1>BẢN ĐỒ ASEAN — BẤM ĐỂ XEM BẢNG THÔNG TIN</h1>
-    <p class="subtitle">Dữ liệu 2025 (rút gọn). Nguồn world GeoJSON online + bảng JSON nội bộ.</p>
+    <h1>BẢN ĐỒ ASEAN — ƯU TIÊN DỮ LIỆU LOCAL</h1>
+    <p class="subtitle">Đọc <code>asean.geojson</code> trong repo; nếu thiếu mới tải world GeoJSON. Dùng bảng facts 2025 bạn gửi.</p>
   </header>
   <main>
     <div id="map" role="img" aria-label="Bản đồ Đông Nam Á"></div>
@@ -65,7 +65,30 @@
       ['MMR','Myanmar'], ['MYS','Malaysia'], ['SGP','Singapore'], ['IDN','Indonesia'],
       ['PHL','Philippines'], ['BRN','Brunei'], ['TLS','Timor‑Leste']
     ]);
-    function codeOf(p,f){ return p.ISO_A3 || p.iso_a3 || p.ADM0_A3 || (f && f.id) || p.id || p.ISO3; }
+    const NAME2ISO3 = new Map(Object.entries({
+      'viet nam':'VNM','vietnam':'VNM',
+      'thailand':'THA','kingdom of thailand':'THA',
+      'laos':'LAO','lao pdr':'LAO','lao people's democratic republic':'LAO','lao peoples democratic republic':'LAO','lao':'LAO',
+      'cambodia':'KHM','kingdom of cambodia':'KHM','khmer':'KHM',
+      'myanmar':'MMR','burma':'MMR',
+      'malaysia':'MYS',
+      'singapore':'SGP','republic of singapore':'SGP',
+      'indonesia':'IDN','republic of indonesia':'IDN',
+      'philippines':'PHL','republic of the philippines':'PHL',
+      'brunei':'BRN','brunei darussalam':'BRN','state of brunei darussalam':'BRN',
+      'timor-leste':'TLS','timor leste':'TLS','east timor':'TLS','democratic republic of timor-leste':'TLS'
+    }));
+    function normalize(s){ return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' '); }
+
+    function codeOf(p,f){
+      // Try common ISO3 fields
+      let c = p.ISO_A3 || p.iso_a3 || p.ADM0_A3 || p.ISO3 || (f && f.id) || p.id;
+      if (c && c.length===3) return c.toUpperCase();
+      // Fallback: map from country names
+      const nm = p.ADMIN || p.NAME || p.NAME_EN || p.NAME_LONG || p.name || p.sovereignt || p.official_name || p.country || p.country_en;
+      const m = NAME2ISO3.get(normalize(nm));
+      return m || null;
+    }
 
     // Modal helpers
     function openModal(title){
@@ -81,7 +104,7 @@
     document.addEventListener('click', e => { if (e.target.matches('[data-close]')) closeModal(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-    // Load SEA facts JSON
+    // Load facts JSON
     async function loadFacts(){
       const res = await fetch('./sea_compact_2025_vi.json', {cache: 'no-store'});
       if (!res.ok) throw new Error('facts HTTP '+res.status);
@@ -100,7 +123,6 @@
     function activeStyle(){ return { color:'#14532d', weight:1.5, fillColor:'#22c55e', fillOpacity:0.95 }; }
 
     function fillInfo(r){
-      // r là record trong JSON; nếu null, để "—"
       document.getElementById('info-summary').textContent = r?.summary_short ?? '—';
       document.getElementById('info-pop').textContent = r?.population_million ?? '—';
       document.getElementById('info-age').textContent = r?.median_age ?? '—';
@@ -108,9 +130,7 @@
       document.getElementById('info-tfr').textContent = r?.tfr ?? '—';
       document.getElementById('info-le').textContent = r?.life_expectancy ?? '—';
       const badges = document.getElementById('info-badges'); badges.innerHTML='';
-      (r?.social_badges || []).forEach(b => {
-        const el = document.createElement('span'); el.className='chip'; el.textContent=b; badges.appendChild(el);
-      });
+      (r?.social_badges || []).forEach(b => { const el=document.createElement('span'); el.className='chip'; el.textContent=b; badges.appendChild(el); });
     }
 
     function bindFeature(layer, feature, factsByIso){
@@ -138,24 +158,37 @@
     }
 
     (async function init(){
-      showStatus('Đang tải dữ liệu...');
+      showStatus('Đang tải facts & GeoJSON...');
       let factsByIso;
       try { factsByIso = await loadFacts(); }
       catch(e){ showStatus('Không tải được bảng thông tin: '+e.message, true); return; }
 
-      const sources = [
-        'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson',
-        'https://cdn.jsdelivr.net/gh/datasets/geo-countries@master/data/countries.geojson',
-        'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json'
-      ];
-      let geo=null;
-      for (const url of sources){
-        try { geo = await tryFetch(url); break; } catch {}
+      let geo=null, source='local';
+      // 1) Ưu tiên lấy asean.geojson cùng thư mục
+      try {
+        geo = await tryFetch('./asean.geojson');
+        showStatus('Đã tải asean.geojson (local).');
+      } catch(e){
+        // 2) Nếu local không có, mới thử world
+        const sources = [
+          'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson',
+          'https://cdn.jsdelivr.net/gh/datasets/geo-countries@master/data/countries.geojson',
+          'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json'
+        ];
+        for (const url of sources){
+          try { geo = await tryFetch(url); source=url; showStatus('Đã tải world từ: '+url); break; } catch {}
+        }
       }
-      if (!geo){ showStatus('Không tải được world GeoJSON.', true); return; }
+      if (!geo){ showStatus('Không tải được GeoJSON.', true); return; }
 
-      const feats = (geo.features||[]).filter(f => ISO2NAME.has(codeOf(f.properties||{}, f)));
-      if (!feats.length){ showStatus('Nguồn world không có ASEAN.', true); return; }
+      // Lọc ASEAN theo ISO3 (kèm fallback tên nếu file local không có ISO)
+      const featsAll = (geo.features||[]);
+      let feats = featsAll.filter(f => ISO2NAME.has(codeOf(f.properties||{}, f)));
+      if (!feats.length && featsAll.length){ 
+        // file local có thể đã là ASEAN subset -> dùng hết
+        if (featsAll.length <= 20) { feats = featsAll; showStatus('Dùng toàn bộ features từ file local.', true); }
+      }
+      if (!feats.length){ showStatus('GeoJSON không có ASEAN.', true); return; }
 
       window.geoLayer = L.geoJSON({type:'FeatureCollection', features:feats}, {
         style: baseStyle,
