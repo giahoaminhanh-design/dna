@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bản đồ ASEAN — nguồn gốc (lọc từ world GeoJSON)</title>
+  <title>Bản đồ ASEAN — Thông tin + Phát âm</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     *{box-sizing:border-box}html,body{margin:0;padding:0;height:100%}
@@ -18,16 +18,21 @@
     .modal.hidden{display:none}
     .modal{position:fixed;inset:0;display:grid;place-items:center;z-index:10000}
     .modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}
-    .modal__dialog{position:relative;background:#fff;border-radius:16px;box-shadow:var(--shadow);width:min(90vw,520px);padding:20px 20px 24px;animation:pop .18s ease-out}
-    .modal__title{margin:4px 0 12px 0;color:var(--accent);font-size:22px}
+    .modal__dialog{position:relative;background:#fff;border-radius:16px;box-shadow:var(--shadow);width:min(92vw,560px);padding:20px 20px 24px;animation:pop .18s ease-out}
+    .modal__title{margin:4px 0 12px 0;color:var(--accent);font-size:22px;display:flex;align-items:center;gap:10px}
     .modal__close{position:absolute;right:10px;top:6px;border:0;background:transparent;font-size:28px;line-height:1;cursor:pointer}
+    .info-table{width:100%;border-collapse:collapse;margin-top:6px}
+    .info-table th,.info-table td{border:1px solid #e2e8f0;padding:8px 10px;text-align:left}
+    .info-table th{width:140px;background:#f8fafc;color:#334155}
+    .speak-btn{display:inline-flex;align-items:center;gap:6px;border:0;background:#0ea5e9;color:#fff;padding:8px 10px;border-radius:10px;cursor:pointer;box-shadow:var(--shadow)}
+    .speak-btn[disabled]{opacity:.6;cursor:not-allowed}
     @keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
   </style>
 </head>
 <body>
   <header>
-    <h1>BẢN ĐỒ ASEAN — NGUỒN GỐC</h1>
-    <p class="subtitle">Lọc trực tiếp từ world GeoJSON (datasets/johan). Không vẽ khung Hoàng Sa/Trường Sa.</p>
+    <h1>BẢN ĐỒ ASEAN — BẤM ĐỂ XEM THÔNG TIN & NGHE PHÁT ÂM</h1>
+    <p class="subtitle">Click vào quốc gia để mở bảng thông tin; có nút phát âm (Web Speech API).</p>
   </header>
   <main>
     <div id="map" role="img" aria-label="Bản đồ Đông Nam Á"></div>
@@ -37,32 +42,40 @@
     <div class="modal__backdrop" data-close></div>
     <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <button class="modal__close" title="Đóng" aria-label="Đóng" data-close>&times;</button>
-      <h2 id="modal-title" class="modal__title"></h2>
-      <div class="modal__body">
-        <p><strong>Dân số:</strong> <span id="info-population"></span></p>
-        <p><strong>Ngôn ngữ:</strong> <span id="info-language"></span></p>
-        <p><strong>Văn hoá:</strong> <span id="info-culture"></span></p>
-      </div>
+      <h2 id="modal-title" class="modal__title">
+        <span id="country-name"></span>
+        <button id="speak-btn" class="speak-btn" title="Phát âm tên & câu chào">
+          🔊 Phát âm
+        </button>
+      </h2>
+      <table class="info-table">
+        <tr><th>Thủ đô</th><td id="info-capital"></td></tr>
+        <tr><th>Dân số</th><td id="info-population"></td></tr>
+        <tr><th>Ngôn ngữ</th><td id="info-language"></td></tr>
+        <tr><th>Câu chào</th><td id="info-greeting"></td></tr>
+      </table>
     </div>
   </div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const STATUS = document.getElementById('status');
     function showStatus(msg, isErr=false){ STATUS.textContent = msg; STATUS.style.display='block'; STATUS.style.background = isErr ? '#7f1d1d' : '#111827'; }
     function hideStatus(){ STATUS.style.display='none'; }
 
+    // Data
     const INFO = {
-      Vietnam:{population:'~100 triệu',language:'Tiếng Việt',culture:'Á Đông + Pháp'},
-      Thailand:{population:'~71 triệu',language:'Tiếng Thái',culture:'Phật giáo, hoàng gia'},
-      Laos:{population:'~7.6 triệu',language:'Tiếng Lào',culture:'Theravada'},
-      Cambodia:{population:'~17 triệu',language:'Khmer',culture:'Angkor'},
-      Myanmar:{population:'~55 triệu',language:'Burmese',culture:'Đa dân tộc'},
-      Malaysia:{population:'~34 triệu',language:'Bahasa',culture:'Hồi giáo, đa tộc'},
-      Singapore:{population:'~6 triệu',language:'Anh/Hoa/ML/Tamil',culture:'Đa văn hoá'},
-      Indonesia:{population:'~280 triệu',language:'Bahasa',culture:'Quần đảo đa ngữ'},
-      Philippines:{population:'~115 triệu',language:'Filipino/Anh',culture:'TBN + Mỹ'},
-      Brunei:{population:'~0.45 triệu',language:'Malay',culture:'Hồi giáo'},
-      'Timor-Leste':{population:'~1.4 triệu',language:'Tetum/Bồ',culture:'Đông Timor'}
+      Vietnam:{capital:'Hà Nội',population:'~100 triệu',language:'Tiếng Việt',greeting:'Xin chào!', voices:['vi-VN']},
+      Thailand:{capital:'Bangkok',population:'~71 triệu',language:'Tiếng Thái',greeting:'สวัสดี!', voices:['th-TH']},
+      Laos:{capital:'Vientiane',population:'~7.6 triệu',language:'Tiếng Lào',greeting:'ສະບາຍດີ!', voices:['lo-LA','th-TH']},
+      Cambodia:{capital:'Phnom Penh',population:'~17 triệu',language:'Khmer',greeting:'ជំរាបសួរ!', voices:['km-KH']},
+      Myanmar:{capital:'Naypyidaw',population:'~55 triệu',language:'Burmese',greeting:'မင်္ဂလာပါ!', voices:['my-MM']},
+      Malaysia:{capital:'Kuala Lumpur',population:'~34 triệu',language:'Malay',greeting:'Selamat datang!', voices:['ms-MY','id-ID']},
+      Singapore:{capital:'Singapore',population:'~6 triệu',language:'Anh / Hoa / Mã Lai / Tamil',greeting:'Hello!', voices:['en-SG','en-GB','en-US','zh-CN','ms-MY','ta-IN']},
+      Indonesia:{capital:'Jakarta',population:'~280 triệu',language:'Bahasa Indonesia',greeting:'Halo!', voices:['id-ID']},
+      Philippines:{capital:'Manila',population:'~115 triệu',language:'Filipino/English',greeting:'Mabuhay!', voices:['fil-PH','en-PH','en-US']},
+      Brunei:{capital:'Bandar Seri Begawan',population:'~0.45 triệu',language:'Malay',greeting:'Selamat datang!', voices:['ms-BN','ms-MY']},
+      'Timor-Leste':{capital:'Dili',population:'~1.4 triệu',language:'Tetum/Português',greeting:'Olá!', voices:['pt-PT','pt-BR']}
     };
     const ISO2NAME = new Map([
       ['VNM','Vietnam'], ['THA','Thailand'], ['LAO','Laos'], ['KHM','Cambodia'],
@@ -87,17 +100,57 @@
     function pickName(p){ return p && (p.ADMIN || p.NAME || p.NAME_LONG || p.NAME_EN || p.name || p.sovereignt || p.official_name || p.official || p.country || p.country_en); }
     function displayName(p,f){ const c=codeOf(p,f); return ISO2NAME.get(c)||NAME_ALIASES.get(normalize(pickName(p)))||pickName(p)||'—'; }
 
+    // TTS helpers (Web Speech API)
+    let allVoices = [];
+    function loadVoices(){ allVoices = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; }
+    loadVoices();
+    if (window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+    function pickVoice(langFallbacks=[]){
+      if (!allVoices.length) loadVoices();
+      for (const target of langFallbacks){
+        // Exact match first
+        let v = allVoices.find(v=>v.lang && v.lang.toLowerCase()===target.toLowerCase());
+        if (v) return v;
+        // Prefix match (e.g., en-*)
+        const prefix = target.split('-')[0].toLowerCase();
+        v = allVoices.find(v=>v.lang && v.lang.toLowerCase().startsWith(prefix));
+        if (v) return v;
+      }
+      // Final fallback: any English voice
+      return allVoices.find(v=>v.lang && v.lang.toLowerCase().startsWith('en')) || null;
+    }
+    function speakFor(country){
+      const meta = INFO[country];
+      if (!meta || !window.speechSynthesis) return;
+      const text = country + '. ' + (meta.greeting || '');
+      const u = new SpeechSynthesisUtterance(text);
+      const voice = pickVoice(meta.voices || []);
+      if (voice){ u.voice = voice; u.lang = voice.lang; }
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    }
+
+    // Leaflet
     const map = L.map('map');
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);
     function baseStyle(){ return { color:'#1e3a8a', weight:1.2, fillColor:'#60a5fa', fillOpacity:0.7 }; }
     function activeStyle(){ return { color:'#14532d', weight:1.5, fillColor:'#22c55e', fillOpacity:0.95 }; }
 
-    function openModal(name){
-      const m = INFO[name] || {population:'—', language:'—', culture:'—'};
-      document.getElementById('modal-title').textContent = name;
-      document.getElementById('info-population').textContent = m.population;
-      document.getElementById('info-language').textContent = m.language;
-      document.getElementById('info-culture').textContent = m.culture;
+    function fillInfo(country){
+      const m = INFO[country] || {};
+      document.getElementById('country-name').textContent = country;
+      document.getElementById('info-capital').textContent = m.capital || '—';
+      document.getElementById('info-population').textContent = m.population || '—';
+      document.getElementById('info-language').textContent = m.language || '—';
+      document.getElementById('info-greeting').textContent = m.greeting || '—';
+      const btn = document.getElementById('speak-btn');
+      btn.disabled = !window.speechSynthesis;
+      btn.onclick = () => speakFor(country);
+    }
+    function openModal(country){
+      fillInfo(country);
       const modal = document.getElementById('modal');
       modal.classList.remove('hidden'); modal.setAttribute('aria-hidden','false');
     }
@@ -105,6 +158,7 @@
       const modal = document.getElementById('modal');
       modal.classList.add('hidden'); modal.setAttribute('aria-hidden','true');
       if (window.geoLayer) window.geoLayer.eachLayer(l => { l.setStyle(baseStyle()); l._active=false; });
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
     }
     document.addEventListener('click', e => { if (e.target.matches('[data-close]')) closeModal(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
@@ -130,7 +184,6 @@
 
       const all = (geo.features||[]);
       let feats = all.filter(f => ISO2NAME.has(codeOf(f.properties || {}, f)));
-
       if (!feats.length){
         feats = all.filter(f => NAME_ALIASES.has(normalize(pickName(f.properties||{}))));
         if (feats.length) showStatus('Nguồn "'+used+'" thiếu ISO3. Đã lọc theo tên quốc gia.', true);
@@ -140,12 +193,12 @@
       window.geoLayer = L.geoJSON({type:'FeatureCollection', features:feats}, {
         style: baseStyle,
         onEachFeature: (feature, layer) => {
-          const label = displayName(feature.properties || {}, feature);
-          layer.bindTooltip(label, {sticky:true, opacity:0.9});
+          const country = displayName(feature.properties || {}, feature);
+          layer.bindTooltip(country, {sticky:true, opacity:0.9});
           layer.on('click', () => {
             window.geoLayer.eachLayer(l => { l.setStyle(baseStyle()); l._active=false; });
             layer.setStyle(activeStyle()); layer._active=true; if (layer.bringToFront) layer.bringToFront();
-            openModal(label);
+            openModal(country);
           });
           layer.on('mouseover', ()=>{ if (!layer._active) layer.setStyle({ fillOpacity: 0.85 }); });
           layer.on('mouseout',  ()=>{ if (!layer._active) layer.setStyle({ fillOpacity: 0.7  }); });
@@ -153,7 +206,7 @@
             const el = layer.getElement(); if (!el) return;
             el.setAttribute('tabindex','0');
             el.setAttribute('role','button');
-            el.setAttribute('aria-label', label);
+            el.setAttribute('aria-label', country);
             el.addEventListener('keydown', (ev) => {
               if (ev.key === 'Enter' || ev.key === ' ') { layer.fire('click'); }
             });
@@ -164,7 +217,7 @@
       map.fitBounds(window.geoLayer.getBounds(), { padding:[20,20] });
       map.on('click', () => closeModal());
 
-      showStatus('Xong! ASEAN đã hiển thị.'); setTimeout(hideStatus, 2200);
+      showStatus('Xong! Bấm quốc gia để xem & nghe.'); setTimeout(hideStatus, 2200);
     })();
   </script>
 </body>
