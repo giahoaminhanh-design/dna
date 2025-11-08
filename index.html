@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Đông Nam Á — Single File (Hiển thị tất cả features trong asean.geojson)</title>
+  <title>Bản đồ Đông Nam Á — 1 file duy nhất</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     *{box-sizing:border-box}html,body{margin:0;padding:0;height:100%}
-    :root{--bg:#eef3f8;--ink:#0f172a;--muted:#64748b;--accent:#22c55e;--blue:#60a5fa;--stroke:#1e3a8a;--shadow:0 10px 30px rgba(2,6,23,.12)}
+    :root{--bg:#f1f5f9;--card:#ffffff;--ink:#0f172a;--muted:#64748b;--accent:#22c55e;--blue:#60a5fa;--stroke:#1e3a8a;--shadow:0 10px 30px rgba(2,6,23,.15)}
     body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
     header{padding:20px 16px;text-align:center}
     header h1{margin:0;font-size:26px}
@@ -15,83 +15,72 @@
     main{height:calc(100% - 120px);padding:0 16px 20px;position:relative}
     #map{height:100%;width:100%;border:1px solid #cbd5e1;border-radius:14px;box-shadow:var(--shadow);background:#fff}
     .status{position:absolute;left:20px;bottom:26px;background:#111827;color:#fff;padding:8px 12px;border-radius:8px;opacity:.9;max-width:70%;font-size:12px;display:none}
+    footer{padding:12px;text-align:center;color:var(--muted)}
     .modal.hidden{display:none}
     .modal{position:fixed;inset:0;display:grid;place-items:center;z-index:10000}
     .modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}
-    .modal__dialog{position:relative;background:#fff;border-radius:16px;box-shadow:var(--shadow);width:min(92vw,640px);padding:20px 20px 24px;animation:pop .18s ease-out}
+    .modal__dialog{position:relative;background:#fff;border-radius:16px;box-shadow:var(--shadow);width:min(90vw,520px);padding:20px 20px 24px;animation:pop .18s ease-out}
     .modal__title{margin:4px 0 12px 0;color:var(--accent);font-size:22px}
     .modal__close{position:absolute;right:10px;top:6px;border:0;background:transparent;font-size:28px;line-height:1;cursor:pointer}
-    .info-grid{display:grid;grid-template-columns:180px 1fr;gap:8px 12px;margin-top:10px}
-    .info-grid .k{color:#334155}
-    .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-    .chip{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:999px;padding:6px 10px;font-size:12px;color:#334155}
     @keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
   </style>
 </head>
 <body>
   <header>
-    <h1>BẢN ĐỒ ĐÔNG NAM Á — 1 FILE</h1>
-    <p class="subtitle">Hiển thị <strong>toàn bộ features</strong> từ <code>asean.geojson</code> bạn gửi (không lọc theo ISO). Dữ liệu facts (nếu có) sẽ tự ghép theo ISO3 hoặc tên.</p>
+    <h1>BẢN ĐỒ ĐÔNG NAM Á — BIÊN GIỚI THẬT</h1>
+    <p class="subtitle">Click vào quốc gia để nảy lên và xem thông tin</p>
   </header>
+
   <main>
     <div id="map" role="img" aria-label="Bản đồ Đông Nam Á"></div>
-    <div id="status" class="status" role="status" aria-live="polite"></div>
+    <div id="status" class="status"></div>
   </main>
+
   <div id="modal" class="modal hidden" aria-hidden="true">
     <div class="modal__backdrop" data-close></div>
     <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <button class="modal__close" title="Đóng" aria-label="Đóng" data-close>&times;</button>
       <h2 id="modal-title" class="modal__title"></h2>
-      <div class="info-grid">
-        <div class="k">Tóm tắt</div><div id="info-summary"></div>
-        <div class="k">Dân số (triệu)</div><div id="info-pop"></div>
-        <div class="k">Tuổi trung vị</div><div id="info-age"></div>
-        <div class="k">Đô thị hoá</div><div id="info-urban"></div>
-        <div class="k">TFR</div><div id="info-tfr"></div>
-        <div class="k">Tuổi thọ</div><div id="info-le"></div>
-        <div class="k">Huy hiệu xã hội</div><div id="info-badges" class="chips"></div>
+      <div class="modal__body">
+        <p><strong>Dân số:</strong> <span id="info-population"></span></p>
+        <p><strong>Ngôn ngữ:</strong> <span id="info-language"></span></p>
+        <p><strong>Văn hoá:</strong> <span id="info-culture"></span></p>
       </div>
     </div>
   </div>
 
-  <script type="application/json" id="inline-geo">{"type": "FeatureCollection", "features": []}</script>
-  <script type="application/json" id="inline-facts">[{"country": "Indonesia", "iso3": "IDN", "year": 2025, "summary_short": "Dân số ~285.7 triệu, đô thị ~60%, lực lượng lao động lớn; già hóa chậm.", "population_million": 285.7, "median_age": 30.4, "urbanization_pct": 59.6, "tfr": 2.1, "life_expectancy": 71.4, "social_badges": ["HDI trung bình", "Internet trung bình", "GDP/người TB thấp", "Biết chữ cao"]}, {"country": "Philippines", "iso3": "PHL", "year": 2025, "summary_short": "Dân số ~116.8 triệu, đô thị ~49%, rất trẻ; TFR < mức thay thế.", "population_million": 116.8, "median_age": 26.1, "urbanization_pct": 49.3, "tfr": 1.88, "life_expectancy": 70.1, "social_badges": ["HDI trung bình", "Internet trung bình", "GDP/người TB thấp", "Biết chữ cao"]}, {"country": "Việt Nam", "iso3": "VNM", "year": 2025, "summary_short": "Dân số ~101.6 triệu, đô thị ~41%, đang già hóa; tăng trưởng ~0.6%.", "population_million": 101.6, "median_age": 33.4, "urbanization_pct": 41.4, "tfr": 1.88, "life_expectancy": 74.9, "social_badges": ["HDI TB cao", "Internet cao", "GDP/người TB", "Biết chữ rất cao"]}, {"country": "Thái Lan", "iso3": "THA", "year": 2025, "summary_short": "Dân số ~71.6 triệu, đô thị ~54%, đã giảm dân số; rất già.", "population_million": 71.6, "median_age": 40.6, "urbanization_pct": 53.5, "tfr": 1.2, "life_expectancy": 76.8, "social_badges": ["HDI cao", "Internet cao", "GDP/người TB cao", "Biết chữ rất cao"]}, {"country": "Myanmar", "iso3": "MMR", "year": 2025, "summary_short": "Dân số ~54.9 triệu, đô thị ~34%, cơ cấu còn trẻ.", "population_million": 54.9, "median_age": 30.1, "urbanization_pct": 34.1, "tfr": 2.1, "life_expectancy": 67.3, "social_badges": ["HDI thấp", "Internet thấp", "GDP/người thấp", "Biết chữ cải thiện"]}, {"country": "Malaysia", "iso3": "MYS", "year": 2025, "summary_short": "Dân số ~36.0 triệu, đô thị ~77%, nhập cư dương; TFR thấp.", "population_million": 36.0, "median_age": 31.0, "urbanization_pct": 77.4, "tfr": 1.53, "life_expectancy": 77.0, "social_badges": ["HDI cao", "Internet cao", "GDP/người cao", "Biết chữ cao"]}, {"country": "Campuchia", "iso3": "KHM", "year": 2025, "summary_short": "Dân số ~17.85 triệu, đô thị ~27%, còn trẻ.", "population_million": 17.85, "median_age": 26.2, "urbanization_pct": 26.5, "tfr": 2.5, "life_expectancy": 71.0, "social_badges": ["HDI TB thấp", "Internet TB thấp", "GDP/người thấp", "Biết chữ cải thiện"]}, {"country": "Lào", "iso3": "LAO", "year": 2025, "summary_short": "Dân số ~7.87 triệu, đô thị ~38%, rất trẻ.", "population_million": 7.87, "median_age": 24.9, "urbanization_pct": 38.3, "tfr": 2.36, "life_expectancy": 69.5, "social_badges": ["HDI TB thấp", "Internet TB thấp", "GDP/người thấp", "Biết chữ cải thiện"]}, {"country": "Singapore", "iso3": "SGP", "year": 2025, "summary_short": "Dân số ~5.87 triệu, đô thị 100%, rất già; TFR <1.", "population_million": 5.87, "median_age": 36.2, "urbanization_pct": 100.0, "tfr": 0.96, "life_expectancy": 84.0, "social_badges": ["HDI rất cao", "Internet rất cao", "GDP/người rất cao", "Biết chữ rất cao"]}, {"country": "Timor‑Leste", "iso3": "TLS", "year": 2025, "summary_short": "Dân số ~1.42 triệu, đô thị ~36%, rất trẻ; TFR cao.", "population_million": 1.419, "median_age": 21.5, "urbanization_pct": 36.0, "tfr": 2.6, "life_expectancy": 68.1, "social_badges": ["HDI thấp", "Internet thấp", "GDP/người thấp", "Biết chữ cải thiện"]}, {"country": "Brunei", "iso3": "BRN", "year": 2025, "summary_short": "Dân số ~0.47 triệu, đô thị ~80%, thu nhập cao; TFR thấp.", "population_million": 0.466, "median_age": 32.7, "urbanization_pct": 80.1, "tfr": 1.7, "life_expectancy": 75.7, "social_badges": ["HDI rất cao", "Internet cao", "GDP/người rất cao", "Biết chữ rất cao"]}]</script>
+  <footer>Deploy thẳng GitHub Pages • 1 file duy nhất</footer>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const STATUS = document.getElementById('status');
     function showStatus(msg, isErr=false){ STATUS.textContent = msg; STATUS.style.display='block'; STATUS.style.background = isErr ? '#7f1d1d' : '#111827'; }
-    function hideStatus(){ STATUS.style.display='none'; }
+    const ASEAN = new Set(['Vietnam','Thailand','Laos','Cambodia','Myanmar','Malaysia','Singapore','Indonesia','Philippines','Brunei','Timor-Leste']);
+    const INFO = { Vietnam:{population:'~100 triệu',language:'Tiếng Việt',culture:'Á Đông + Pháp'},
+    Thailand:{population:'~71 triệu',language:'Tiếng Thái',culture:'Phật giáo, hoàng gia'},
+    Laos:{population:'~7.6 triệu',language:'Tiếng Lào',culture:'Theravada'},
+    Cambodia:{population:'~17 triệu',language:'Khmer',culture:'Angkor'},
+    Myanmar:{population:'~55 triệu',language:'Burmese',culture:'Đa dân tộc'},
+    Malaysia:{population:'~34 triệu',language:'Bahasa',culture:'Hồi giáo, đa tộc'},
+    Singapore:{population:'~6 triệu',language:'Anh/Hoa/ML/Tamil',culture:'Đa văn hoá'},
+    Indonesia:{population:'~280 triệu',language:'Bahasa',culture:'Quần đảo đa ngữ'},
+    Philippines:{population:'~115 triệu',language:'Filipino/Anh',culture:'TBN + Mỹ'},
+    Brunei:{population:'~0.45 triệu',language:'Malay',culture:'Hồi giáo'},
+    'Timor-Leste':{population:'~1.4 triệu',language:'Tetum/Bồ',culture:'Đông Timor'}, };
 
-    // Helpers
-    function normalize(s){ return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' '); }
-    function pickName(p){ return p?.ADMIN || p?.NAME || p?.NAME_LONG || p?.NAME_EN || p?.name || p?.official_name || p?.country || p?.country_en || p?.sovereignt || '—'; }
-    function codeOf(p,f){ 
-      let c = p?.ISO_A3 || p?.iso_a3 || p?.ADM0_A3 || p?.ISO3 || (f && f.id) || p?.id;
-      if (c && c.length===3) return c.toUpperCase(); 
-      return null;
-    }
+    const map = L.map('map');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);
 
-    // Facts index by iso3 + by name
-    const inlineFacts = JSON.parse(document.getElementById('inline-facts').textContent || '[]');
-    const byIso = new Map(); const byName = new Map();
-    inlineFacts.forEach(r => {
-      if (r.iso3) byIso.set(String(r.iso3).toUpperCase(), r);
-      if (r.country_vi) byName.set(normalize(r.country_vi), r);
-      if (r.country_en) byName.set(normalize(r.country_en), r);
-    });
+    function nameOf(props){ return props.ADMIN || props.NAME || props.NAME_EN || props.name || props.sovereignt; }
+    function baseStyle(){ return { color:'#1e3a8a', weight:1.2, fillColor:'#60a5fa', fillOpacity:0.7 }; }
+    function activeStyle(){ return { color:'#14532d', weight:1.5, fillColor:'#22c55e', fillOpacity:0.95 }; }
 
-    function findFacts(p,f){
-      const iso = codeOf(p,f);
-      if (iso && byIso.has(iso)) return byIso.get(iso);
-      const n = normalize(pickName(p));
-      if (byName.has(n)) return byName.get(n);
-      return null;
-    }
-
-    // Modal helpers
-    function openModal(title){
-      document.getElementById('modal-title').textContent = title;
+    function openModal(name){
+      const m = INFO[name] || {population:'—', language:'—', culture:'—'};
+      document.getElementById('modal-title').textContent = name;
+      document.getElementById('info-population').textContent = m.population;
+      document.getElementById('info-language').textContent = m.language;
+      document.getElementById('info-culture').textContent = m.culture;
       const modal = document.getElementById('modal');
       modal.classList.remove('hidden'); modal.setAttribute('aria-hidden','false');
     }
@@ -101,59 +90,48 @@
       if (window.geoLayer) window.geoLayer.eachLayer(l => { l.setStyle(baseStyle()); l._active=false; });
     }
     document.addEventListener('click', e => { if (e.target.matches('[data-close]')) closeModal(); });
-    document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-    // Leaflet init
-    const map = L.map('map');
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);
-    function baseStyle(){ return { color:'#1e3a8a', weight:1.2, fillColor:'#60a5fa', fillOpacity:0.7 }; }
-    function activeStyle(){ return { color:'#14532d', weight:1.5, fillColor:'#22c55e', fillOpacity:0.95 }; }
-
-    function fillInfo(r){
-      document.getElementById('info-summary').textContent = r?.summary_short ?? '—';
-      document.getElementById('info-pop').textContent = r?.population_million ?? '—';
-      document.getElementById('info-age').textContent = r?.median_age ?? '—';
-      document.getElementById('info-urban').textContent = (r?.urbanization_pct != null) ? (r.urbanization_pct + '%') : '—';
-      document.getElementById('info-tfr').textContent = r?.tfr ?? '—';
-      document.getElementById('info-le').textContent = r?.life_expectancy ?? '—';
-      const badges = document.getElementById('info-badges'); badges.innerHTML='';
-      (r?.social_badges || []).forEach(b => { const el=document.createElement('span'); el.className='chip'; el.textContent=b; badges.appendChild(el); });
+    async function tryFetch(url){
+      const r = await fetch(url, {mode:'cors'});
+      if (!r.ok) throw new Error('HTTP '+r.status); return r.json();
     }
 
-    (function init(){
-      showStatus('Đang render GeoJSON nhúng...');
+    (async function init(){
+      showStatus('Đang tải dữ liệu biên giới...');
+      const sources = [
+        'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson',
+        'https://cdn.jsdelivr.net/gh/datasets/geo-countries@master/data/countries.geojson',
+        'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json'
+      ];
       let geo=null;
-      try { geo = JSON.parse(document.getElementById('inline-geo').textContent); }
-      catch(e){ showStatus('GeoJSON nhúng lỗi JSON.', true); return; }
-      const featsAll = (geo && geo.features) ? geo.features : [];
-      if (!featsAll.length) { showStatus('GeoJSON nhúng không có feature nào.', true); return; }
-
-      // Không lọc: vẽ TẤT CẢ features có trong file
-      window.geoLayer = L.geoJSON({type:'FeatureCollection', features:featsAll}, {
+      for (const url of sources){
+        try { geo = await tryFetch(url); showStatus('Tải từ: '+url); break; }
+        catch(e){ /* try next */ }
+      }
+      if (!geo){ showStatus('Không tải được GeoJSON từ internet. Dùng file local: asean.geojson', true);
+        try { const local = await tryFetch('./asean.geojson'); geo = local; }
+        catch(e){ showStatus('Thiếu cả asean.geojson. Upload file đó vào repo nhé.', true); return; }
+      }
+      const feats = (geo.features||[]).filter(f => ASEAN.has(nameOf(f.properties)));
+      if (!feats.length){ showStatus('GeoJSON không có ASEAN. Hãy cung cấp asean.geojson đã lọc.', true); return; }
+      window.geoLayer = L.geoJSON({type:'FeatureCollection', features:feats}, {
         style: baseStyle,
         onEachFeature: (feature, layer) => {
-          const p = feature.properties || {};
-          const title = pickName(p);
-          layer.bindTooltip(title, {sticky:true, opacity:0.9});
+          const name = nameOf(feature.properties);
+          layer.bindTooltip(name, {sticky:true, opacity:0.9});
           layer.on('click', () => {
             window.geoLayer.eachLayer(l => { l.setStyle(baseStyle()); l._active=false; });
             layer.setStyle(activeStyle()); layer._active=true; if (layer.bringToFront) layer.bringToFront();
-            openModal(title);
-            fillInfo(findFacts(p, feature));
+            openModal(name);
           });
           layer.on('mouseover', ()=>{ if (!layer._active) layer.setStyle({ fillOpacity: 0.85 }); });
           layer.on('mouseout',  ()=>{ if (!layer._active) layer.setStyle({ fillOpacity: 0.7  }); });
-          layer.once('add', () => {
-            const el = layer.getElement(); if (!el) return;
-            el.setAttribute('tabindex','0'); el.setAttribute('role','button'); el.setAttribute('aria-label', title);
-            el.addEventListener('keydown', (ev) => { if (ev.key==='Enter'||ev.key===' ') layer.fire('click'); });
-          });
         }
       }).addTo(map);
-
       map.fitBounds(window.geoLayer.getBounds(), { padding:[20,20] });
-      map.on('click', () => closeModal());
-      showStatus('Xong! Hiển thị toàn bộ features từ asean.geojson.'); setTimeout(hideStatus, 2200);
+      showStatus('Tải xong. Click vào quốc gia để xem thông tin.');
+      setTimeout(()=> STATUS.style.display='none', 2500);
     })();
   </script>
 </body>
