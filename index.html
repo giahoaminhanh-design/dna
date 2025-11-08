@@ -119,13 +119,46 @@
     tong_quan: "Timor-Leste ~1,4 triệu dân, rất trẻ và mức sinh cao.\nHDI trung bình thấp; kinh tế đang phát triển, phụ thuộc nông nghiệp và viện trợ."
   }
 };
+// Màu cố định cho từng quốc gia
+    const COLORS = {
+      Vietnam:       '#22c55e', // xanh lá
+      Thailand:      '#eab308', // vàng
+      Laos:          '#84cc16', // xanh non
+      Cambodia:      '#06b6d4', // cyan
+      Myanmar:       '#f59e0b', // cam sáng
+      Malaysia:      '#3b82f6', // xanh dương
+      Singapore:     '#a855f7', // tím
+      Indonesia:     '#f97316', // cam
+      Philippines:   '#ef4444', // đỏ
+      Brunei:        '#0ea5e9', // xanh biển
+      'Timor-Leste': '#db2777'  // hồng đậm
+};
 
     const map = L.map('map');
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);
 
     function nameOf(props){ return props.ADMIN || props.NAME || props.NAME_EN || props.name || props.sovereignt; }
-    function baseStyle(){ return { color:'#1e3a8a', weight:1.2, fillColor:'#60a5fa', fillOpacity:0.7 }; }
-    function activeStyle(){ return { color:'#14532d', weight:1.5, fillColor:'#22c55e', fillOpacity:0.95 }; }
+    function baseStyle(feature){
+      const name = canon(nameOf(feature.properties));
+      const fill = COLORS[name] || '#60a5fa';
+      return {
+        color: '#1e3a8a',
+        weight: 1.2,
+        fillColor: fill,
+        fillOpacity: 0.70
+      };
+    }
+    
+    function activeStyle(feature){
+      const name = canon(nameOf(feature.properties));
+      const fill = COLORS[name] || '#60a5fa';
+      return {
+        color: '#14532d',
+        weight: 1.8,
+        fillColor: fill,
+        fillOpacity: 0.95
+      };
+    }
 
 // Map tên nước khác nhau về 1 key chuẩn trong INFO
 const ALIAS = {
@@ -157,7 +190,7 @@ function openModal(name){
     function closeModal(){
       const modal = document.getElementById('modal');
       modal.classList.add('hidden'); modal.setAttribute('aria-hidden','true');
-      if (window.geoLayer) window.geoLayer.eachLayer(l => { l.setStyle(baseStyle()); l._active=false; });
+      if (window.geoLayer) window.geoLayer.eachLayer(l => { l.setStyle(baseStyle(l.feature)); l._active=false; });
     }
     document.addEventListener('click', e => { if (e.target.matches('[data-close]')) closeModal(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
@@ -191,8 +224,8 @@ function openModal(name){
           const name = nameOf(feature.properties);
           layer.bindTooltip(name, {sticky:true, opacity:0.9});
           layer.on('click', () => {
-            window.geoLayer.eachLayer(l => { l.setStyle(baseStyle()); l._active=false; });
-            layer.setStyle(activeStyle()); layer._active=true; if (layer.bringToFront) layer.bringToFront();
+            window.geoLayer.eachLayer(l => { l.setStyle(baseStyle(l.feature)); l._active=false; });
+            layer.setStyle(activeStyle(feature)); if (layer.bringToFront) layer.bringToFront();
             openModal(name);
           });
           layer.on('mouseover', ()=>{ if (!layer._active) layer.setStyle({ fillOpacity: 0.85 }); });
