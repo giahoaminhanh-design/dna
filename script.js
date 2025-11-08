@@ -1,132 +1,106 @@
-// World basemap + ASEAN polygons per-country color + Paracel/Spratly colored as Vietnam
+// Bản đồ ASEAN có thông tin chi tiết — dùng GeoJSON nội bộ
 const STATUS = document.getElementById('status');
-function showStatus(msg, isErr=false){ STATUS.textContent = msg; STATUS.style.display='block'; STATUS.style.background = isErr ? '#7f1d1d' : '#111827'; }
+function showStatus(msg, isErr=false){
+  STATUS.textContent = msg;
+  STATUS.style.display = 'block';
+  STATUS.style.background = isErr ? '#7f1d1d' : '#111827';
+  clearTimeout(window.__statusTimer);
+  window.__statusTimer = setTimeout(()=> STATUS.style.display='none', 2400);
+}
 
-const ASEAN = ['Vietnam','Thailand','Laos','Cambodia','Myanmar','Malaysia','Singapore','Indonesia','Philippines','Brunei','Timor-Leste'];
-const ASEAN_SET = new Set(ASEAN);
+// Bản đồ
+const map = L.map('map', { zoomControl: true, attributionControl: false });
+const boundsSE = [[-12, 90],[24, 150]]; // khung Đông Nam Á
+map.fitBounds(boundsSE);
+L.control.attribution({prefix:false}).addTo(map);
 
+// Màu mỗi nước
 const COLORS = {
-  Vietnam:'#22c55e', Thailand:'#60a5fa', Laos:'#a78bfa', Cambodia:'#f472b6',
-  Myanmar:'#fb923c', Malaysia:'#38bdf8', Singapore:'#f87171', Indonesia:'#34d399',
-  Philippines:'#fbbf24', Brunei:'#c084fc', 'Timor-Leste':'#f59e0b'
+  'Vietnam':'#22c55e','Thailand':'#60a5fa','Laos':'#a78bfa','Cambodia':'#f472b6',
+  'Myanmar':'#fb923c','Malaysia':'#38bdf8','Singapore':'#f87171','Indonesia':'#34d399',
+  'Philippines':'#fbbf24','Brunei':'#c084fc','Timor-Leste':'#f59e0b'
 };
 
-const INFO = {
-  Vietnam:{population:'~100 triệu',language:'Tiếng Việt',culture:'Á Đông + Pháp'},
-  Thailand:{population:'~71 triệu',language:'Tiếng Thái',culture:'Phật giáo, hoàng gia'},
-  Laos:{population:'~7.6 triệu',language:'Tiếng Lào',culture:'Theravada'},
-  Cambodia:{population:'~17 triệu',language:'Khmer',culture:'Angkor'},
-  Myanmar:{population:'~55 triệu',language:'Burmese',culture:'Đa dân tộc'},
-  Malaysia:{population:'~34 triệu',language:'Bahasa',culture:'Hồi giáo, đa tộc'},
-  Singapore:{population:'~6 triệu',language:'Anh/Hoa/ML/Tamil',culture:'Đa văn hoá'},
-  Indonesia:{population:'~280 triệu',language:'Bahasa',culture:'Quần đảo đa ngữ'},
-  Philippines:{population:'~115 triệu',language:'Filipino/Anh',culture:'TBN + Mỹ'},
-  Brunei:{population:'~0.45 triệu',language:'Malay',culture:'Hồi giáo'},
-  'Timor-Leste':{population:'~1.4 triệu',language:'Tetum/Bồ',culture:'Đông Timor'},
+// Dữ liệu tóm tắt (có thể chỉnh sửa / cập nhật sau)
+const DATA = {
+  'Vietnam':{capital:'Hà Nội',population:'~100 triệu',area:'~331.000 km²',gdp:'~430 tỷ USD',currency:'VND',language:'Tiếng Việt',culture:'Á Đông, chịu ảnh hưởng Trung Hoa & Pháp'},
+  'Thailand':{capital:'Bangkok',population:'~71 triệu',area:'~513.000 km²',gdp:'~500 tỷ USD',currency:'THB',language:'Tiếng Thái',culture:'Phật giáo Theravada, hoàng gia'},
+  'Laos':{capital:'Viêng Chăn',population:'~7.6 triệu',area:'~237.000 km²',gdp:'~15 tỷ USD',currency:'LAK',language:'Tiếng Lào',culture:'Phật giáo Theravada, lục địa'},
+  'Cambodia':{capital:'Phnom Penh',population:'~17 triệu',area:'~181.000 km²',gdp:'~30 tỷ USD',currency:'KHR',language:'Tiếng Khmer',culture:'Đền Angkor, văn hoá Khmer'},
+  'Myanmar':{capital:'Naypyidaw',population:'~55 triệu',area:'~676.000 km²',gdp:'~65 tỷ USD',currency:'MMK',language:'Tiếng Myanmar',culture:'Đa sắc tộc, Phật giáo'},
+  'Malaysia':{capital:'Kuala Lumpur',population:'~34 triệu',area:'~330.000 km²',gdp:'~410 tỷ USD',currency:'MYR',language:'Tiếng Mã Lai',culture:'Đa sắc tộc: Mã Lai, Hoa, Ấn'},
+  'Singapore':{capital:'Singapore',population:'~5.9 triệu',area:'~733 km²',gdp:'~500+ tỷ USD',currency:'SGD',language:'Anh/Mã Lai/Quan thoại/Tamil',culture:'Thành phố-nhà nước, đa văn hoá'},
+  'Indonesia':{capital:'Nusantara (đang chuyển từ Jakarta)',population:'~280 triệu',area:'~1.9 triệu km²',gdp:'~1.4 nghìn tỷ USD',currency:'IDR',language:'Tiếng Indonesia',culture:'Quốc đảo, Hồi giáo lớn nhất thế giới'},
+  'Philippines':{capital:'Manila',population:'~119 triệu',area:'~300.000 km²',gdp:'~440 tỷ USD',currency:'PHP',language:'Filipino/Anh',culture:'Quốc đảo, văn hoá Latinh-Á Đông'},
+  'Brunei':{capital:'Bandar Seri Begawan',population:'~0.45 triệu',area:'~5.765 km²',gdp:'~18 tỷ USD',currency:'BND',language:'Tiếng Mã Lai',culture:'Quân chủ Hồi giáo, dầu khí'},
+  'Timor-Leste':{capital:'Dili',population:'~1.4 triệu',area:'~15.000 km²',gdp:'~3 tỷ USD',currency:'USD',language:'Tetum/Portug uese',culture:'Quốc đảo non trẻ, lusophone'}
 };
 
-// World basemap
-const map = L.map('map', { zoomControl:true, scrollWheelZoom:true, minZoom:3, maxZoom:18 });
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
-
-function nameOf(props){ return props.ADMIN || props.NAME || props.NAME_EN || props.name || props.sovereignt; }
-function styleByName(name){ return { color:'#1f2937', weight:1, fillColor: COLORS[name] || '#9ca3af', fillOpacity:0.75 }; }
-function activeStyle(name){ return { color:'#111827', weight:1.5, fillColor: COLORS[name] || '#22c55e', fillOpacity:0.95 }; }
-
-function openModal(name){
-  const m = INFO[name] || {population:'—', language:'—', culture:'—'};
-  document.getElementById('modal-title').textContent = name;
-  document.getElementById('info-population').textContent = m.population;
-  document.getElementById('info-language').textContent = m.language;
-  document.getElementById('info-culture').textContent = m.culture;
-  const modal = document.getElementById('modal');
-  modal.classList.remove('hidden'); modal.setAttribute('aria-hidden','false');
+// Hàm style
+function styleByName(name){
+  return {
+    color:'#0f172a', weight:0.7, fillColor: COLORS[name] || '#9ca3af', fillOpacity:0.88
+  };
 }
-function closeModal(){
-  const modal = document.getElementById('modal');
-  modal.classList.add('hidden'); modal.setAttribute('aria-hidden','true');
-  if (window.geoLayer) window.geoLayer.eachLayer(l => { const n=l.feature && nameOf(l.feature.properties); l.setStyle(styleByName(n)); l._active=false; });
-}
-document.addEventListener('click', e => { if (e.target.matches('[data-close]')) closeModal(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
-async function tryFetch(url){ const r = await fetch(url, {mode:'cors'}); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
-
-// Islands polygons displayed as part of Vietnam (display choice)
-const ISLANDS = {
-  "Quần đảo Hoàng Sa (Việt Nam)": {
-    "type":"Feature","properties":{"name":"Vietnam"}, "geometry":{"type":"Polygon","coordinates":[[[111.2,16.1],[112.8,16.1],[112.8,17.1],[111.2,17.1],[111.2,16.1]]]}
-  },
-  "Quần đảo Trường Sa (Việt Nam)": {
-    "type":"Feature","properties":{"name":"Vietnam"}, "geometry":{"type":"Polygon","coordinates":[[[111.8,7.8],[117.3,7.8],[117.3,12.6],[111.8,12.6],[111.8,7.8]]]}
-  }
-};
-
-function addIslands(){
-  Object.keys(ISLANDS).forEach(label => {
-    const f = ISLANDS[label];
-    const layer = L.geoJSON(f, {
-      style: { color:'#14532d', weight:1.2, fillColor: COLORS['Vietnam'], fillOpacity:0.35 }
-    }).addTo(map);
-    layer.bindTooltip(label, {sticky:true, opacity:0.95});
-  });
+function activeStyle(name){
+  return { color:'#0f172a', weight:1.3, fillColor: COLORS[name] || '#9ca3af', fillOpacity:0.96 };
 }
 
-(function addLegend(){
-  const div = L.DomUtil.create('div', 'legend');
-  let html = '<h3>Màu quốc gia</h3>';
-  Object.keys(COLORS).forEach(n => {
-    html += `<div class="legend-item"><span class="legend-swatch" style="background:${COLORS[n]}"></span>${n}</div>`;
-  });
-  html += `<hr><div class="legend-item"><span class="legend-swatch" style="background:${COLORS['Vietnam']}"></span>Hoàng Sa / Trường Sa (VN)</div>`;
-  div.innerHTML = html;
-  L.control({position:'bottomright'}).onAdd = () => div;
-  L.control({position:'bottomright'}).addTo(map);
-})();
-
-(async function init(){
-  showStatus('Đang tải dữ liệu ASEAN...');
-  let geo=null;
-  const sources = [
-    './asean.geojson',
-    'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson',
-    'https://cdn.jsdelivr.net/gh/datasets/geo-countries@master/data/countries.geojson',
-    'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json'
-  ];
-  for (const url of sources){
-    try {
-      const data = await tryFetch(url);
-      if (!data || !data.features) continue;
-      if (url.endsWith('asean.geojson')) {
-        geo = data; // assume already filtered
-      } else {
-        const feats = data.features.filter(f => ASEAN_SET.has(nameOf(f.properties)));
-        geo = { type:'FeatureCollection', features:feats };
-      }
-      showStatus('Tải từ: '+url);
-      break;
-    } catch(e){ /* try next */ }
-  }
-  if (!geo || !geo.features || !geo.features.length){ showStatus('Không có dữ liệu ASEAN. Hãy upload file asean.geojson.', true); return; }
-
-  window.geoLayer = L.geoJSON(geo, {
-    style: feat => styleByName(nameOf(feat.properties)),
-    onEachFeature: (feature, layer) => {
-      const name = nameOf(feature.properties);
-      layer.bindTooltip(name, {sticky:true, opacity:0.9});
-      layer.on('click', () => {
-        window.geoLayer.eachLayer(l => { const n=l.feature&&nameOf(l.feature.properties); l.setStyle(styleByName(n)); l._active=false; });
-        layer.setStyle(activeStyle(name)); layer._active=true; if (layer.bringToFront) layer.bringToFront();
-        openModal(name);
+function bindEvents(layer, name){
+  layer.on('click', () => {
+    if (window.geoLayer){
+      window.geoLayer.eachLayer(l => {
+        const n = l.feature && (l.feature.properties.NAME_0 || l.feature.properties.name || l.feature.properties.admin);
+        if (!n) return;
+        l.setStyle(styleByName(n));
+        l._active = false;
       });
-      layer.on('mouseover', ()=>{ if (!layer._active){ const n=name; layer.setStyle({ fillOpacity: 0.9, fillColor: COLORS[n]||'#9ca3af' }); } });
-      layer.on('mouseout',  ()=>{ if (!layer._active){ const n=name; layer.setStyle({ fillOpacity: 0.75, fillColor: COLORS[n]||'#9ca3af' }); } });
     }
-  }).addTo(map);
+    layer.setStyle(activeStyle(name)); layer._active = true;
+    if (layer.bringToFront) layer.bringToFront();
+    openPanel(name);
+  });
+  layer.on('mouseover', () => { if (!layer._active) layer.setStyle({fillOpacity:0.95}); });
+  layer.on('mouseout',  () => { if (!layer._active) layer.setStyle({fillOpacity:0.88}); });
+}
 
-  map.fitBounds(window.geoLayer.getBounds(), { padding:[20,20] });
-  addIslands();
-  showStatus('Tải xong. Nền thế giới + ASEAN nhiều màu.'); setTimeout(()=> STATUS.style.display='none', 2500);
+function openPanel(name){
+  const info = DATA[name] || {};
+  document.getElementById('info-name').textContent = name || '—';
+  document.getElementById('info-capital').textContent = info.capital || '—';
+  document.getElementById('info-population').textContent = info.population || '—';
+  document.getElementById('info-area').textContent = info.area || '—';
+  document.getElementById('info-gdp').textContent = info.gdp || '—';
+  document.getElementById('info-currency').textContent = info.currency || '—';
+  document.getElementById('info-language').textContent = info.language || '—';
+  document.getElementById('info-culture').textContent = info.culture || '—';
+}
+
+// Load GeoJSON
+(async () => {
+  try{
+    showStatus('Đang tải dữ liệu ASEAN…');
+    const res = await fetch('./asean.geojson');
+    const gj = await res.json();
+
+    window.geoLayer = L.geoJSON(gj, {
+      filter: f => true,
+      style: f => {
+        const name = f.properties.NAME_0 || f.properties.name || f.properties.admin;
+        return styleByName(name);
+      },
+      onEachFeature: (feature, layer) => {
+        const name = feature.properties.NAME_0 || feature.properties.name || feature.properties.admin;
+        if (!name) return;
+        layer.bindTooltip(name, {sticky:true, direction:'auto'});
+        bindEvents(layer, name);
+      }
+    }).addTo(map);
+
+    map.fitBounds(window.geoLayer.getBounds(), {padding:[20,20]});
+    showStatus('Tải xong. Bấm vào quốc gia để xem chi tiết.');
+  }catch(e){
+    console.error(e);
+    showStatus('Lỗi tải dữ liệu.', true);
+  }
 })();

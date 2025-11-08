@@ -3,39 +3,41 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ASEAN — Mỗi nước một màu + Hoàng Sa/Trường Sa (VN) + Nền thế giới</title>
+  <title>ASEAN — Bản đồ tương tác (bấm quốc gia để xem thông tin)</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="./style.css" />
-  <meta name="description" content="Bản đồ ASEAN với nền thế giới (OpenStreetMap), mỗi nước một màu, Hoàng Sa/Trường Sa tô cùng màu Việt Nam.">
 </head>
 <body>
   <header class="site-header">
-    <h1>BẢN ĐỒ ASEAN — MỖI NƯỚC MỘT MÀU</h1>
-    <p class="subtitle">Có nền thế giới (OpenStreetMap) • Hoàng Sa / Trường Sa tô cùng màu Việt Nam</p>
+    <h1>Bản đồ ASEAN — Tương tác</h1>
+    <p class="subtitle">Bấm vào từng nước để xem thông tin nhanh</p>
   </header>
 
   <main class="layout">
-    <div id="map" role="img" aria-label="Bản đồ Đông Nam Á"></div>
-    <div id="status" class="status"></div>
-  </main>
-
-  <!-- Modal -->
-  <div id="modal" class="modal hidden" aria-hidden="true">
-    <div class="modal__backdrop" data-close></div>
-    <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-      <button class="modal__close" title="Đóng" aria-label="Đóng" data-close>&times;</button>
-      <h2 id="modal-title" class="modal__title"></h2>
-      <div class="modal__body">
-        <p><strong>Dân số:</strong> <span id="info-population"></span></p>
-        <p><strong>Ngôn ngữ:</strong> <span id="info-language"></span></p>
-        <p><strong>Văn hoá:</strong> <span id="info-culture"></span></p>
+    <div id="map"></div>
+    <aside class="panel" id="panel">
+      <div class="panel-section">
+        <div class="badge">THÔNG TIN</div>
+        <h2 id="info-name" class="country-name">—</h2>
+        <p><strong>Thủ đô:</strong> <span id="info-capital">—</span></p>
+        <p><strong>Dân số:</strong> <span id="info-population">—</span></p>
+        <p><strong>Diện tích:</strong> <span id="info-area">—</span></p>
+        <p><strong>GDP (nominal):</strong> <span id="info-gdp">—</span></p>
+        <p><strong>Tiền tệ:</strong> <span id="info-currency">—</span></p>
+        <p><strong>Ngôn ngữ chính:</strong> <span id="info-language">—</span></p>
+        <p><strong>Văn hoá/ghi chú:</strong> <span id="info-culture">—</span></p>
       </div>
-    </div>
-  </div>
+      <div class="panel-section tip">
+        Gợi ý: kéo phóng bản đồ, di chuột để xem tên, bấm để ghim & xem chi tiết.
+      </div>
+    </aside>
+  </main>
 
   <footer class="site-footer">
     <span>Deploy thẳng GitHub Pages • Không cần npm</span>
   </footer>
+
+  <div id="status" class="status">Đang tải…</div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="./script.js"></script>
