@@ -27,7 +27,7 @@
 </head>
 <body>
   <header>
-    <h1>BẢN ĐỒ ĐÔNG NAM Á — BIÊN GIỚI THẬT</h1>
+    <h1>BẢN ĐỒ ĐÔNG NAM Á</h1>
     <p class="subtitle">Click vào quốc gia để nảy lên và xem thông tin</p>
   </header>
 
@@ -42,9 +42,9 @@
       <button class="modal__close" title="Đóng" aria-label="Đóng" data-close>&times;</button>
       <h2 id="modal-title" class="modal__title"></h2>
       <div class="modal__body">
-        <p><strong>Dân số:</strong> <span id="info-population"></span></p>
-        <p><strong>Ngôn ngữ:</strong> <span id="info-language"></span></p>
-        <p><strong>Văn hoá:</strong> <span id="info-culture"></span></p>
+      <p><strong>Dân số:</strong> <span id="info-danso"></span></p>
+      <p><strong>Xã hội:</strong> <span id="info-xahoi"></span></p>
+      <p><strong>Tổng quan:</strong> <span id="info-tongquan"></span></p>
       </div>
     </div>
   </div>
@@ -121,15 +121,33 @@
     function baseStyle(){ return { color:'#1e3a8a', weight:1.2, fillColor:'#60a5fa', fillOpacity:0.7 }; }
     function activeStyle(){ return { color:'#14532d', weight:1.5, fillColor:'#22c55e', fillOpacity:0.95 }; }
 
-    function openModal(name){
-      const m = INFO[name] || {population:'—', language:'—', culture:'—'};
-      document.getElementById('modal-title').textContent = name;
-      document.getElementById('info-population').textContent = m.population;
-      document.getElementById('info-language').textContent = m.language;
-      document.getElementById('info-culture').textContent = m.culture;
-      const modal = document.getElementById('modal');
-      modal.classList.remove('hidden'); modal.setAttribute('aria-hidden','false');
-    }
+// Map tên nước khác nhau về 1 key chuẩn trong INFO
+const ALIAS = {
+  'Viet Nam': 'Vietnam',
+  "Lao PDR": "Laos",
+  "Lao People's Democratic Republic": "Laos",
+  'Kingdom of Cambodia': 'Cambodia',
+  'Burma': 'Myanmar',
+  'Brunei Darussalam': 'Brunei',
+  'Timor Leste': 'Timor-Leste',
+  'East Timor': 'Timor-Leste'
+};
+const canon = (n) => ALIAS[n] || n;
+function openModal(name){
+  const key = ALIAS[name] || name; // chuẩn hoá tên nước
+  const m = INFO[key] || { dan_so: '—', xa_hoi: '—', tong_quan: '—' };
+
+  document.getElementById('modal-title').textContent = name;
+
+  // 3 dòng hiển thị 3 mục mới
+  document.getElementById('info-danso').textContent    = m.dan_so;
+  document.getElementById('info-xahoi').textContent    = m.xa_hoi;
+  document.getElementById('info-tongquan').textContent = m.tong_quan;
+
+  const modal = document.getElementById('modal');
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden','false');
+}
     function closeModal(){
       const modal = document.getElementById('modal');
       modal.classList.add('hidden'); modal.setAttribute('aria-hidden','true');
@@ -159,7 +177,7 @@
         try { const local = await tryFetch('./asean.geojson'); geo = local; }
         catch(e){ showStatus('Thiếu cả asean.geojson. Upload file đó vào repo nhé.', true); return; }
       }
-      const feats = (geo.features||[]).filter(f => ASEAN.has(nameOf(f.properties)));
+      const feats = (geo.features||[]).filter(f => ASEAN.has(canon(nameOf(f.properties))));
       if (!feats.length){ showStatus('GeoJSON không có ASEAN. Hãy cung cấp asean.geojson đã lọc.', true); return; }
       window.geoLayer = L.geoJSON({type:'FeatureCollection', features:feats}, {
         style: baseStyle,
