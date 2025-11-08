@@ -56,17 +56,63 @@
     const STATUS = document.getElementById('status');
     function showStatus(msg, isErr=false){ STATUS.textContent = msg; STATUS.style.display='block'; STATUS.style.background = isErr ? '#7f1d1d' : '#111827'; }
     const ASEAN = new Set(['Vietnam','Thailand','Laos','Cambodia','Myanmar','Malaysia','Singapore','Indonesia','Philippines','Brunei','Timor-Leste']);
-    const INFO = { Vietnam:{population:'~100 triệu',language:'Tiếng Việt',culture:'Á Đông + Pháp'},
-    Thailand:{population:'~71 triệu',language:'Tiếng Thái',culture:'Phật giáo, hoàng gia'},
-    Laos:{population:'~7.6 triệu',language:'Tiếng Lào',culture:'Theravada'},
-    Cambodia:{population:'~17 triệu',language:'Khmer',culture:'Angkor'},
-    Myanmar:{population:'~55 triệu',language:'Burmese',culture:'Đa dân tộc'},
-    Malaysia:{population:'~34 triệu',language:'Bahasa',culture:'Hồi giáo, đa tộc'},
-    Singapore:{population:'~6 triệu',language:'Anh/Hoa/ML/Tamil',culture:'Đa văn hoá'},
-    Indonesia:{population:'~280 triệu',language:'Bahasa',culture:'Quần đảo đa ngữ'},
-    Philippines:{population:'~115 triệu',language:'Filipino/Anh',culture:'TBN + Mỹ'},
-    Brunei:{population:'~0.45 triệu',language:'Malay',culture:'Hồi giáo'},
-    'Timor-Leste':{population:'~1.4 triệu',language:'Tetum/Bồ',culture:'Đông Timor'}, };
+    const INFO = {
+  Vietnam: {
+    dan_so: "Dân số: 101,6 triệu • Tuổi trung bình: 33,4 • Đô thị hóa: 41% • TFR: 1,88 • Tuổi thọ: 74,9 năm",
+    xa_hoi: "Ngôn ngữ: Tiếng Việt • Văn hoá/tôn giáo: Phật giáo, Công giáo • HDI: 0,715 (Trung bình–cao) • GDP/người: 4.700 USD • Biết chữ: 97,9% • Internet: 78%",
+    tong_quan: "Việt Nam ~101,6 triệu dân, đô thị hóa 41%, tăng dân số chậm, già hoá dần. HDI trung bình–cao, biết chữ gần toàn dân, hạ tầng xã hội và Internet tiếp tục cải thiện."
+  },
+  Indonesia: {
+    dan_so: "Dân số: 285,7 triệu • Tuổi trung bình: 30,4 • Đô thị hóa: 60% • TFR: 2,10 • Tuổi thọ: 71,4 năm",
+    xa_hoi: "Ngôn ngữ: Bahasa Indonesia • Văn hoá/tôn giáo: Hồi giáo • HDI: 0,711 (Trung bình) • GDP/người: 5.460 USD • Biết chữ: 96% • Internet: 79%",
+    tong_quan: "Indonesia ~285,7 triệu dân, đô thị hóa ~60%, cơ cấu dân số trẻ và lực lượng lao động lớn. HDI trung bình, cải thiện nhờ giáo dục và y tế."
+  },
+  Philippines: {
+    dan_so: "Dân số: 116,8 triệu • Tuổi trung bình: 26,1 • Đô thị hóa: 49% • TFR: 1,88 • Tuổi thọ: 70,1 năm",
+    xa_hoi: "Ngôn ngữ: Filipino, English • Văn hoá/tôn giáo: Công giáo • HDI: 0,699 (Trung bình) • GDP/người: 4.000 USD • Biết chữ: 99% • Internet: 73%",
+    tong_quan: "Philippines >116 triệu dân, dân số trẻ (tuổi TB ~26). HDI trung bình; mức sinh giảm; kinh tế phụ thuộc dịch vụ và kiều hối."
+  },
+  Thailand: {
+    dan_so: "Dân số: 71,6 triệu • Tuổi trung bình: 40,6 • Đô thị hóa: 54% • TFR: 1,20 • Tuổi thọ: 76,8 năm",
+    xa_hoi: "Ngôn ngữ: Tiếng Thái • Văn hoá/tôn giáo: Phật giáo Theravada • HDI: 0,803 (Cao) • GDP/người: 7.800 USD • Biết chữ: 94% • Internet: 85%",
+    tong_quan: "Thái Lan 71,6 triệu dân, đang già hoá nhanh do mức sinh rất thấp. HDI cao, tuổi thọ cao; thách thức về lực lượng lao động già."
+  },
+  Malaysia: {
+    dan_so: "Dân số: 36,0 triệu • Tuổi trung bình: 31,0 • Đô thị hóa: 77% • TFR: 1,53 • Tuổi thọ: 77,0 năm",
+    xa_hoi: "Ngôn ngữ: Bahasa Malaysia, English, Chinese, Tamil • Văn hoá/tôn giáo: Hồi giáo • HDI: 0,803 (Cao) • GDP/người: 11.600 USD • Biết chữ: 95% • Internet: 92%",
+    tong_quan: "Malaysia 36 triệu dân, đô thị hóa cao (77%), dân số trẻ–trung niên. HDI cao, thu hút lao động nhập cư, hạ tầng xã hội phát triển."
+  },
+  Singapore: {
+    dan_so: "Dân số: 5,9 triệu • Tuổi trung bình: 36,2 • Đô thị hóa: 100% • TFR: 0,96 • Tuổi thọ: 84,0 năm",
+    xa_hoi: "Ngôn ngữ: English, Chinese, Malay, Tamil • Văn hoá/tôn giáo: Đa tôn giáo • HDI: 0,939 (Rất cao) • GDP/người: 90.500 USD • Biết chữ: 98% • Internet: 98%",
+    tong_quan: "Singapore 5,9 triệu dân, đô thị hóa hoàn toàn; mức sinh thấp nhất khu vực. HDI rất cao; tuổi thọ và GDP/người dẫn đầu ASEAN."
+  },
+  Myanmar: {
+    dan_so: "Dân số: 54,9 triệu • Tuổi trung bình: 30,1 • Đô thị hóa: 34% • TFR: 2,10 • Tuổi thọ: 67,3 năm",
+    xa_hoi: "Ngôn ngữ: Tiếng Myanmar • Văn hoá/tôn giáo: Phật giáo Theravada • HDI: 0,585 (Thấp) • GDP/người: 1.530 USD • Biết chữ: 90% • Internet: 46%",
+    tong_quan: "Myanmar 54,9 triệu dân, cơ cấu trẻ, đô thị hóa thấp. HDI thấp; hệ thống xã hội và y tế còn nhiều hạn chế."
+  },
+  Cambodia: {
+    dan_so: "Dân số: 17,9 triệu • Tuổi trung bình: 26,2 • Đô thị hóa: 27% • TFR: 2,50 • Tuổi thọ: 71,0 năm",
+    xa_hoi: "Ngôn ngữ: Tiếng Khmer • Văn hoá/tôn giáo: Phật giáo Theravada • HDI: 0,593 (Trung bình thấp) • GDP/người: 1.860 USD • Biết chữ: 83% • Internet: 58%",
+    tong_quan: "Campuchia 17,9 triệu dân, dân số trẻ và đô thị hóa thấp. HDI trung bình thấp, giáo dục–y tế cải thiện đáng kể thập kỷ qua."
+  },
+  Laos: {
+    dan_so: "Dân số: 7,9 triệu • Tuổi trung bình: 25,0 • Đô thị hóa: 38% • TFR: 2,36 • Tuổi thọ: 69,5 năm",
+    xa_hoi: "Ngôn ngữ: Tiếng Lào • Văn hoá/tôn giáo: Phật giáo Theravada • HDI: 0,607 (Trung bình thấp) • GDP/người: 2.700 USD • Biết chữ: 85% • Internet: 57%",
+    tong_quan: "Lào gần 7,9 triệu dân, cơ cấu trẻ, tăng dân số khá cao. HDI trung bình thấp; hạ tầng và giáo dục đang dần nâng cao."
+  },
+  Brunei: {
+    dan_so: "Dân số: 0,47 triệu • Tuổi trung bình: 32,7 • Đô thị hóa: 80% • TFR: 1,70 • Tuổi thọ: 75,7 năm",
+    xa_hoi: "Ngôn ngữ: Bahasa Melayu, English • Văn hoá/tôn giáo: Hồi giáo • HDI: 0,830 (Rất cao) • GDP/người: 79.500 USD • Biết chữ: 97% • Internet: 96%",
+    tong_quan: "Brunei 0,47 triệu dân, đô thị hóa cao và thu nhập cao. HDI rất cao, hệ thống y tế–giáo dục phát triển."
+  },
+  "Timor-Leste": {
+    dan_so: "Dân số: 1,42 triệu • Tuổi trung bình: 21,5 • Đô thị hóa: 36% • TFR: 2,60 • Tuổi thọ: 68,1 năm",
+    xa_hoi: "Ngôn ngữ: Tetum, Bồ Đào Nha • Văn hoá/tôn giáo: Công giáo • HDI: 0,626 (Trung bình thấp) • GDP/người: 2.500 USD • Biết chữ: 70% • Internet: 53%",
+    tong_quan: "Timor-Leste ~1,4 triệu dân, rất trẻ và mức sinh cao. HDI trung bình thấp; kinh tế đang phát triển, phụ thuộc nông nghiệp và viện trợ."
+  }
+};
 
     const map = L.map('map');
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);
