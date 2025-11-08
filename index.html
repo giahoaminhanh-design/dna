@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ASEAN — Single File (Inline GeoJSON + Facts)</title>
+  <title>Đông Nam Á — Single File (Hiển thị tất cả features trong asean.geojson)</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     *{box-sizing:border-box}html,body{margin:0;padding:0;height:100%}
@@ -30,8 +30,8 @@
 </head>
 <body>
   <header>
-    <h1>ASEAN — Single File</h1>
-    <p class="subtitle">GeoJSON & bảng facts được <strong>nhúng trực tiếp</strong>. Không fetch file ngoài.</p>
+    <h1>BẢN ĐỒ ĐÔNG NAM Á — 1 FILE</h1>
+    <p class="subtitle">Hiển thị <strong>toàn bộ features</strong> từ <code>asean.geojson</code> bạn gửi (không lọc theo ISO). Dữ liệu facts (nếu có) sẽ tự ghép theo ISO3 hoặc tên.</p>
   </header>
   <main>
     <div id="map" role="img" aria-label="Bản đồ Đông Nam Á"></div>
@@ -63,33 +63,33 @@
     function showStatus(msg, isErr=false){ STATUS.textContent = msg; STATUS.style.display='block'; STATUS.style.background = isErr ? '#7f1d1d' : '#111827'; }
     function hideStatus(){ STATUS.style.display='none'; }
 
-    const ISO2NAME = new Map([
-      ['VNM','Việt Nam'], ['THA','Thái Lan'], ['LAO','Lào'], ['KHM','Campuchia'],
-      ['MMR','Myanmar'], ['MYS','Malaysia'], ['SGP','Singapore'], ['IDN','Indonesia'],
-      ['PHL','Philippines'], ['BRN','Brunei'], ['TLS','Timor‑Leste']
-    ]);
+    // Helpers
     function normalize(s){ return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' '); }
-    const NAME2ISO3 = new Map(Object.entries({
-      'viet nam':'VNM','vietnam':'VNM',
-      'thailand':'THA','kingdom of thailand':'THA',
-      'laos':'LAO','lao pdr':'LAO','lao people\'s democratic republic':'LAO','lao peoples democratic republic':'LAO','lao':'LAO',
-      'cambodia':'KHM','kingdom of cambodia':'KHM','khmer':'KHM',
-      'myanmar':'MMR','burma':'MMR',
-      'malaysia':'MYS',
-      'singapore':'SGP','republic of singapore':'SGP',
-      'indonesia':'IDN','republic of indonesia':'IDN',
-      'philippines':'PHL','republic of the philippines':'PHL',
-      'brunei':'BRN','brunei darussalam':'BRN','state of brunei darussalam':'BRN',
-      'timor-leste':'TLS','timor leste':'TLS','east timor':'TLS','democratic republic of timor-leste':'TLS'
-    }));
-
-    function codeOf(p,f){
+    function pickName(p){ return p?.ADMIN || p?.NAME || p?.NAME_LONG || p?.NAME_EN || p?.name || p?.official_name || p?.country || p?.country_en || p?.sovereignt || '—'; }
+    function codeOf(p,f){ 
       let c = p?.ISO_A3 || p?.iso_a3 || p?.ADM0_A3 || p?.ISO3 || (f && f.id) || p?.id;
-      if (c && c.length===3) return c.toUpperCase();
-      const nm = p?.ADMIN || p?.NAME || p?.NAME_EN || p?.NAME_LONG || p?.name || p?.sovereignt || p?.official_name || p?.country || p?.country_en;
-      return NAME2ISO3.get(normalize(nm)) || null;
+      if (c && c.length===3) return c.toUpperCase(); 
+      return null;
     }
 
+    // Facts index by iso3 + by name
+    const inlineFacts = JSON.parse(document.getElementById('inline-facts').textContent || '[]');
+    const byIso = new Map(); const byName = new Map();
+    inlineFacts.forEach(r => {
+      if (r.iso3) byIso.set(String(r.iso3).toUpperCase(), r);
+      if (r.country_vi) byName.set(normalize(r.country_vi), r);
+      if (r.country_en) byName.set(normalize(r.country_en), r);
+    });
+
+    function findFacts(p,f){
+      const iso = codeOf(p,f);
+      if (iso && byIso.has(iso)) return byIso.get(iso);
+      const n = normalize(pickName(p));
+      if (byName.has(n)) return byName.get(n);
+      return null;
+    }
+
+    // Modal helpers
     function openModal(title){
       document.getElementById('modal-title').textContent = title;
       const modal = document.getElementById('modal');
@@ -103,6 +103,7 @@
     document.addEventListener('click', e => { if (e.target.matches('[data-close]')) closeModal(); });
     document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
 
+    // Leaflet init
     const map = L.map('map');
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);
     function baseStyle(){ return { color:'#1e3a8a', weight:1.2, fillColor:'#60a5fa', fillOpacity:0.7 }; }
@@ -119,51 +120,40 @@
       (r?.social_badges || []).forEach(b => { const el=document.createElement('span'); el.className='chip'; el.textContent=b; badges.appendChild(el); });
     }
 
-    function bindFeature(layer, feature, factsByIso){
-      const iso = codeOf(feature.properties||{}, feature);
-      const title = ISO2NAME.get(iso) || iso || '—';
-      layer.bindTooltip(title, {sticky:true, opacity:0.9});
-      layer.on('click', () => {
-        window.geoLayer.eachLayer(l => { l.setStyle(baseStyle()); l._active=false; });
-        layer.setStyle(activeStyle()); layer._active=true; if (layer.bringToFront) layer.bringToFront();
-        openModal(title);
-        fillInfo(factsByIso.get(iso) || null);
-      });
-      layer.on('mouseover', ()=>{ if (!layer._active) layer.setStyle({ fillOpacity: 0.85 }); });
-      layer.on('mouseout',  ()=>{ if (!layer._active) layer.setStyle({ fillOpacity: 0.7  }); });
-      layer.once('add', () => {
-        const el = layer.getElement(); if (!el) return;
-        el.setAttribute('tabindex','0'); el.setAttribute('role','button'); el.setAttribute('aria-label', title);
-        el.addEventListener('keydown', (ev) => { if (ev.key==='Enter'||ev.key===' ') layer.fire('click'); });
-      });
-    }
-
     (function init(){
-      showStatus('Đang render dữ liệu nhúng...');
-      let geo=null, facts=null;
+      showStatus('Đang render GeoJSON nhúng...');
+      let geo=null;
       try { geo = JSON.parse(document.getElementById('inline-geo').textContent); }
       catch(e){ showStatus('GeoJSON nhúng lỗi JSON.', true); return; }
-      try { facts = JSON.parse(document.getElementById('inline-facts').textContent); }
-      catch(e){ showStatus('Facts nhúng lỗi JSON.', true); return; }
-      if(!geo || !geo.features){ showStatus('GeoJSON nhúng thiếu "features".', true); return; }
+      const featsAll = (geo && geo.features) ? geo.features : [];
+      if (!featsAll.length) { showStatus('GeoJSON nhúng không có feature nào.', true); return; }
 
-      const byIso = new Map();
-      (facts||[]).forEach(r => { if (r.iso3) byIso.set(String(r.iso3).toUpperCase(), r); });
-
-      let featsAll = geo.features || [];
-      // Nếu file đã là subset ASEAN (<=20 feature), cứ dùng hết
-      let feats = featsAll.length <= 20 ? featsAll : featsAll.filter(f => ISO2NAME.has(codeOf(f.properties||{}, f)));
-      if(!feats.length){ showStatus('GeoJSON nhúng không có ASEAN.', true); return; }
-
-      window.geoLayer = L.geoJSON({type:'FeatureCollection', features:feats}, {
+      // Không lọc: vẽ TẤT CẢ features có trong file
+      window.geoLayer = L.geoJSON({type:'FeatureCollection', features:featsAll}, {
         style: baseStyle,
-        onEachFeature: (feature, layer) => bindFeature(layer, feature, byIso)
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties || {};
+          const title = pickName(p);
+          layer.bindTooltip(title, {sticky:true, opacity:0.9});
+          layer.on('click', () => {
+            window.geoLayer.eachLayer(l => { l.setStyle(baseStyle()); l._active=false; });
+            layer.setStyle(activeStyle()); layer._active=true; if (layer.bringToFront) layer.bringToFront();
+            openModal(title);
+            fillInfo(findFacts(p, feature));
+          });
+          layer.on('mouseover', ()=>{ if (!layer._active) layer.setStyle({ fillOpacity: 0.85 }); });
+          layer.on('mouseout',  ()=>{ if (!layer._active) layer.setStyle({ fillOpacity: 0.7  }); });
+          layer.once('add', () => {
+            const el = layer.getElement(); if (!el) return;
+            el.setAttribute('tabindex','0'); el.setAttribute('role','button'); el.setAttribute('aria-label', title);
+            el.addEventListener('keydown', (ev) => { if (ev.key==='Enter'||ev.key===' ') layer.fire('click'); });
+          });
+        }
       }).addTo(map);
 
       map.fitBounds(window.geoLayer.getBounds(), { padding:[20,20] });
       map.on('click', () => closeModal());
-
-      showStatus('Xong! Single file hiển thị đủ ASEAN.'); setTimeout(hideStatus, 2200);
+      showStatus('Xong! Hiển thị toàn bộ features từ asean.geojson.'); setTimeout(hideStatus, 2200);
     })();
   </script>
 </body>
