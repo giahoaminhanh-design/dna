@@ -1,16 +1,17 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ASEAN — Bản đồ tương tác (bấm quốc gia để xem thông tin)</title>
+  <title>ASEAN — Tương tác (bản inline, không cần fetch)</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
   <header class="site-header">
     <h1>Bản đồ ASEAN — Tương tác</h1>
-    <p class="subtitle">Bấm vào từng nước để xem thông tin nhanh</p>
+    <p class="subtitle">Bản này nhúng trực tiếp GeoJSON → chạy được cả khi mở file <code>index.html</code> bằng <code>file://</code></p>
   </header>
 
   <main class="layout">
@@ -34,12 +35,15 @@
   </main>
 
   <footer class="site-footer">
-    <span>Deploy thẳng GitHub Pages • Không cần npm</span>
+    <span>Deploy thẳng GitHub Pages • hoặc mở file trực tiếp đều OK</span>
   </footer>
 
   <div id="status" class="status">Đang tải…</div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+  window.__ASEAN_GEOJSON__ = {"type": "FeatureCollection", "features": []};
+  </script>
   <script src="./script.js"></script>
 </body>
 </html>
