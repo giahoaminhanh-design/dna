@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bản đồ ASEAN — Ưu tiên dữ liệu local (FIX)</title>
+  <title>ASEAN — Single File (Inline GeoJSON + Facts)</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     *{box-sizing:border-box}html,body{margin:0;padding:0;height:100%}
@@ -30,8 +30,8 @@
 </head>
 <body>
   <header>
-    <h1>BẢN ĐỒ ASEAN — ƯU TIÊN DỮ LIỆU LOCAL</h1>
-    <p class="subtitle">Đọc <code>asean.geojson</code> trong repo; nếu thiếu mới tải world GeoJSON. Dùng bảng facts 2025 bạn gửi.</p>
+    <h1>ASEAN — Single File</h1>
+    <p class="subtitle">GeoJSON & bảng facts được <strong>nhúng trực tiếp</strong>. Không fetch file ngoài.</p>
   </header>
   <main>
     <div id="map" role="img" aria-label="Bản đồ Đông Nam Á"></div>
@@ -54,6 +54,9 @@
     </div>
   </div>
 
+  <script type="application/json" id="inline-geo">{"type": "FeatureCollection", "features": []}</script>
+  <script type="application/json" id="inline-facts">[{"country": "Indonesia", "iso3": "IDN", "year": 2025, "summary_short": "Dân số ~285.7 triệu, đô thị ~60%, lực lượng lao động lớn; già hóa chậm.", "population_million": 285.7, "median_age": 30.4, "urbanization_pct": 59.6, "tfr": 2.1, "life_expectancy": 71.4, "social_badges": ["HDI trung bình", "Internet trung bình", "GDP/người TB thấp", "Biết chữ cao"]}, {"country": "Philippines", "iso3": "PHL", "year": 2025, "summary_short": "Dân số ~116.8 triệu, đô thị ~49%, rất trẻ; TFR < mức thay thế.", "population_million": 116.8, "median_age": 26.1, "urbanization_pct": 49.3, "tfr": 1.88, "life_expectancy": 70.1, "social_badges": ["HDI trung bình", "Internet trung bình", "GDP/người TB thấp", "Biết chữ cao"]}, {"country": "Việt Nam", "iso3": "VNM", "year": 2025, "summary_short": "Dân số ~101.6 triệu, đô thị ~41%, đang già hóa; tăng trưởng ~0.6%.", "population_million": 101.6, "median_age": 33.4, "urbanization_pct": 41.4, "tfr": 1.88, "life_expectancy": 74.9, "social_badges": ["HDI TB cao", "Internet cao", "GDP/người TB", "Biết chữ rất cao"]}, {"country": "Thái Lan", "iso3": "THA", "year": 2025, "summary_short": "Dân số ~71.6 triệu, đô thị ~54%, đã giảm dân số; rất già.", "population_million": 71.6, "median_age": 40.6, "urbanization_pct": 53.5, "tfr": 1.2, "life_expectancy": 76.8, "social_badges": ["HDI cao", "Internet cao", "GDP/người TB cao", "Biết chữ rất cao"]}, {"country": "Myanmar", "iso3": "MMR", "year": 2025, "summary_short": "Dân số ~54.9 triệu, đô thị ~34%, cơ cấu còn trẻ.", "population_million": 54.9, "median_age": 30.1, "urbanization_pct": 34.1, "tfr": 2.1, "life_expectancy": 67.3, "social_badges": ["HDI thấp", "Internet thấp", "GDP/người thấp", "Biết chữ cải thiện"]}, {"country": "Malaysia", "iso3": "MYS", "year": 2025, "summary_short": "Dân số ~36.0 triệu, đô thị ~77%, nhập cư dương; TFR thấp.", "population_million": 36.0, "median_age": 31.0, "urbanization_pct": 77.4, "tfr": 1.53, "life_expectancy": 77.0, "social_badges": ["HDI cao", "Internet cao", "GDP/người cao", "Biết chữ cao"]}, {"country": "Campuchia", "iso3": "KHM", "year": 2025, "summary_short": "Dân số ~17.85 triệu, đô thị ~27%, còn trẻ.", "population_million": 17.85, "median_age": 26.2, "urbanization_pct": 26.5, "tfr": 2.5, "life_expectancy": 71.0, "social_badges": ["HDI TB thấp", "Internet TB thấp", "GDP/người thấp", "Biết chữ cải thiện"]}, {"country": "Lào", "iso3": "LAO", "year": 2025, "summary_short": "Dân số ~7.87 triệu, đô thị ~38%, rất trẻ.", "population_million": 7.87, "median_age": 24.9, "urbanization_pct": 38.3, "tfr": 2.36, "life_expectancy": 69.5, "social_badges": ["HDI TB thấp", "Internet TB thấp", "GDP/người thấp", "Biết chữ cải thiện"]}, {"country": "Singapore", "iso3": "SGP", "year": 2025, "summary_short": "Dân số ~5.87 triệu, đô thị 100%, rất già; TFR <1.", "population_million": 5.87, "median_age": 36.2, "urbanization_pct": 100.0, "tfr": 0.96, "life_expectancy": 84.0, "social_badges": ["HDI rất cao", "Internet rất cao", "GDP/người rất cao", "Biết chữ rất cao"]}, {"country": "Timor‑Leste", "iso3": "TLS", "year": 2025, "summary_short": "Dân số ~1.42 triệu, đô thị ~36%, rất trẻ; TFR cao.", "population_million": 1.419, "median_age": 21.5, "urbanization_pct": 36.0, "tfr": 2.6, "life_expectancy": 68.1, "social_badges": ["HDI thấp", "Internet thấp", "GDP/người thấp", "Biết chữ cải thiện"]}, {"country": "Brunei", "iso3": "BRN", "year": 2025, "summary_short": "Dân số ~0.47 triệu, đô thị ~80%, thu nhập cao; TFR thấp.", "population_million": 0.466, "median_age": 32.7, "urbanization_pct": 80.1, "tfr": 1.7, "life_expectancy": 75.7, "social_badges": ["HDI rất cao", "Internet cao", "GDP/người rất cao", "Biết chữ rất cao"]}]</script>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const STATUS = document.getElementById('status');
@@ -65,10 +68,11 @@
       ['MMR','Myanmar'], ['MYS','Malaysia'], ['SGP','Singapore'], ['IDN','Indonesia'],
       ['PHL','Philippines'], ['BRN','Brunei'], ['TLS','Timor‑Leste']
     ]);
+    function normalize(s){ return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' '); }
     const NAME2ISO3 = new Map(Object.entries({
       'viet nam':'VNM','vietnam':'VNM',
       'thailand':'THA','kingdom of thailand':'THA',
-      'laos':'LAO','lao pdr':'LAO','lao people's democratic republic':'LAO','lao peoples democratic republic':'LAO','lao':'LAO',
+      'laos':'LAO','lao pdr':'LAO','lao people\'s democratic republic':'LAO','lao peoples democratic republic':'LAO','lao':'LAO',
       'cambodia':'KHM','kingdom of cambodia':'KHM','khmer':'KHM',
       'myanmar':'MMR','burma':'MMR',
       'malaysia':'MYS',
@@ -78,19 +82,14 @@
       'brunei':'BRN','brunei darussalam':'BRN','state of brunei darussalam':'BRN',
       'timor-leste':'TLS','timor leste':'TLS','east timor':'TLS','democratic republic of timor-leste':'TLS'
     }));
-    function normalize(s){ return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' '); }
 
     function codeOf(p,f){
-      // Try common ISO3 fields
-      let c = p.ISO_A3 || p.iso_a3 || p.ADM0_A3 || p.ISO3 || (f && f.id) || p.id;
+      let c = p?.ISO_A3 || p?.iso_a3 || p?.ADM0_A3 || p?.ISO3 || (f && f.id) || p?.id;
       if (c && c.length===3) return c.toUpperCase();
-      // Fallback: map from country names
-      const nm = p.ADMIN || p.NAME || p.NAME_EN || p.NAME_LONG || p.name || p.sovereignt || p.official_name || p.country || p.country_en;
-      const m = NAME2ISO3.get(normalize(nm));
-      return m || null;
+      const nm = p?.ADMIN || p?.NAME || p?.NAME_EN || p?.NAME_LONG || p?.name || p?.sovereignt || p?.official_name || p?.country || p?.country_en;
+      return NAME2ISO3.get(normalize(nm)) || null;
     }
 
-    // Modal helpers
     function openModal(title){
       document.getElementById('modal-title').textContent = title;
       const modal = document.getElementById('modal');
@@ -102,21 +101,8 @@
       if (window.geoLayer) window.geoLayer.eachLayer(l => { l.setStyle(baseStyle()); l._active=false; });
     }
     document.addEventListener('click', e => { if (e.target.matches('[data-close]')) closeModal(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
 
-    // Load facts JSON
-    async function loadFacts(){
-      const res = await fetch('./sea_compact_2025_vi.json', {cache: 'no-store'});
-      if (!res.ok) throw new Error('facts HTTP '+res.status);
-      const arr = await res.json();
-      const byIso = new Map();
-      for (const r of arr){
-        if (r.iso3) byIso.set(r.iso3.toUpperCase(), r);
-      }
-      return byIso;
-    }
-
-    // Leaflet init
     const map = L.map('map');
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);
     function baseStyle(){ return { color:'#1e3a8a', weight:1.2, fillColor:'#60a5fa', fillOpacity:0.7 }; }
@@ -152,53 +138,32 @@
       });
     }
 
-    async function tryFetch(url){
-      const r = await fetch(url, {mode:'cors'});
-      if (!r.ok) throw new Error('HTTP '+r.status); return r.json();
-    }
+    (function init(){
+      showStatus('Đang render dữ liệu nhúng...');
+      let geo=null, facts=null;
+      try { geo = JSON.parse(document.getElementById('inline-geo').textContent); }
+      catch(e){ showStatus('GeoJSON nhúng lỗi JSON.', true); return; }
+      try { facts = JSON.parse(document.getElementById('inline-facts').textContent); }
+      catch(e){ showStatus('Facts nhúng lỗi JSON.', true); return; }
+      if(!geo || !geo.features){ showStatus('GeoJSON nhúng thiếu "features".', true); return; }
 
-    (async function init(){
-      showStatus('Đang tải facts & GeoJSON...');
-      let factsByIso;
-      try { factsByIso = await loadFacts(); }
-      catch(e){ showStatus('Không tải được bảng thông tin: '+e.message, true); return; }
+      const byIso = new Map();
+      (facts||[]).forEach(r => { if (r.iso3) byIso.set(String(r.iso3).toUpperCase(), r); });
 
-      let geo=null, source='local';
-      // 1) Ưu tiên lấy asean.geojson cùng thư mục
-      try {
-        geo = await tryFetch('./asean.geojson');
-        showStatus('Đã tải asean.geojson (local).');
-      } catch(e){
-        // 2) Nếu local không có, mới thử world
-        const sources = [
-          'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson',
-          'https://cdn.jsdelivr.net/gh/datasets/geo-countries@master/data/countries.geojson',
-          'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json'
-        ];
-        for (const url of sources){
-          try { geo = await tryFetch(url); source=url; showStatus('Đã tải world từ: '+url); break; } catch {}
-        }
-      }
-      if (!geo){ showStatus('Không tải được GeoJSON.', true); return; }
-
-      // Lọc ASEAN theo ISO3 (kèm fallback tên nếu file local không có ISO)
-      const featsAll = (geo.features||[]);
-      let feats = featsAll.filter(f => ISO2NAME.has(codeOf(f.properties||{}, f)));
-      if (!feats.length && featsAll.length){ 
-        // file local có thể đã là ASEAN subset -> dùng hết
-        if (featsAll.length <= 20) { feats = featsAll; showStatus('Dùng toàn bộ features từ file local.', true); }
-      }
-      if (!feats.length){ showStatus('GeoJSON không có ASEAN.', true); return; }
+      let featsAll = geo.features || [];
+      // Nếu file đã là subset ASEAN (<=20 feature), cứ dùng hết
+      let feats = featsAll.length <= 20 ? featsAll : featsAll.filter(f => ISO2NAME.has(codeOf(f.properties||{}, f)));
+      if(!feats.length){ showStatus('GeoJSON nhúng không có ASEAN.', true); return; }
 
       window.geoLayer = L.geoJSON({type:'FeatureCollection', features:feats}, {
         style: baseStyle,
-        onEachFeature: (feature, layer) => bindFeature(layer, feature, factsByIso)
+        onEachFeature: (feature, layer) => bindFeature(layer, feature, byIso)
       }).addTo(map);
 
       map.fitBounds(window.geoLayer.getBounds(), { padding:[20,20] });
       map.on('click', () => closeModal());
 
-      showStatus('Xong! Bấm quốc gia để xem bảng.'); setTimeout(hideStatus, 2200);
+      showStatus('Xong! Single file hiển thị đủ ASEAN.'); setTimeout(hideStatus, 2200);
     })();
   </script>
 </body>
