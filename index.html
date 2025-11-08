@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bản đồ Đông Nam Á — 1 file duy nhất</title>
+  <title>Bản đồ Đông Nam Á — có Hoàng Sa & Trường Sa</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     *{box-sizing:border-box}html,body{margin:0;padding:0;height:100%}
@@ -23,17 +23,19 @@
     .modal__title{margin:4px 0 12px 0;color:var(--accent);font-size:22px}
     .modal__close{position:absolute;right:10px;top:6px;border:0;background:transparent;font-size:28px;line-height:1;cursor:pointer}
     @keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+    .disclaimer{position:absolute;right:16px;bottom:16px;background:#fff;border:1px dashed #94a3b8;border-radius:10px;padding:8px 12px;font-size:12px;color:#475569;max-width:360px}
   </style>
 </head>
 <body>
   <header>
-    <h1>BẢN ĐỒ ĐÔNG NAM Á — BIÊN GIỚI THẬT</h1>
-    <p class="subtitle">Click vào quốc gia để nảy lên và xem thông tin</p>
+    <h1>BẢN ĐỒ ĐÔNG NAM Á — CÓ HIỂN THỊ QUẦN ĐẢO</h1>
+    <p class="subtitle">Click vào quốc gia để nảy lên. Khu vực Hoàng Sa & Trường Sa được khoanh nét đứt (mang tính minh hoạ).</p>
   </header>
 
   <main>
     <div id="map" role="img" aria-label="Bản đồ Đông Nam Á"></div>
     <div id="status" class="status" role="status" aria-live="polite"></div>
+    <div class="disclaimer">Khu vực quần đảo được vẽ dưới dạng khung phạm vi <em>ước lệ</em> để đảm bảo hiển thị; không thể hiện ranh giới pháp lý.</div>
   </main>
 
   <div id="modal" class="modal hidden" aria-hidden="true">
@@ -58,7 +60,7 @@
 
     // Thông tin hiển thị
     const INFO = {
-      Vietnam:{population:'~100 triệu',language:'Tiếng Việt',culture:'Á Đông + Pháp'},
+      Vietnam:{population:'~100 triệu',language:'Tiếng Việt',culture:'Á Đông + Pháp; gồm đất liền & các quần đảo ngoài khơi'},
       Thailand:{population:'~71 triệu',language:'Tiếng Thái',culture:'Phật giáo, hoàng gia'},
       Laos:{population:'~7.6 triệu',language:'Tiếng Lào',culture:'Theravada'},
       Cambodia:{population:'~17 triệu',language:'Khmer',culture:'Angkor'},
@@ -115,12 +117,48 @@
       if (!r.ok) throw new Error('HTTP '+r.status); return r.json();
     }
 
+    // === Vẽ khung ước lệ cho Hoàng Sa, Trường Sa (dạng polygon nét đứt) ===
+    // Toạ độ xấp xỉ (lon, lat), thể hiện phạm vi minh hoạ để người dùng thấy trên bản đồ.
+    const ARCHIPELAGO_BOXES = {
+      "Quần đảo Hoàng Sa": {
+        polygon: [[
+          [111.0, 16.0],[113.5, 16.0],[113.5, 17.8],[111.0, 17.8],[111.0, 16.0]
+        ]],
+        center: [16.9, 112.2]
+      },
+      "Quần đảo Trường Sa": {
+        polygon: [[
+          [111.0, 7.0],[118.0, 7.0],[118.0, 12.5],[111.0, 12.5],[111.0, 7.0]
+        ]],
+        center: [10.0, 114.5]
+      }
+    };
+
+    function addArchipelagoBoxes(map){
+      const group = L.featureGroup();
+      Object.entries(ARCHIPELAGO_BOXES).forEach(([label, conf]) => {
+        const layer = L.polygon(conf.polygon, {
+          color:'#0f172a', weight:1.2, fillColor:'#94a3b8', fillOpacity:0.15, dashArray:'6 4'
+        }).bindTooltip(label + ' (ước lệ)', {sticky:true, opacity:0.9});
+        layer.on('click', () => openModal('Vietnam')); // click vào sẽ mở thông tin Việt Nam
+        group.addLayer(layer);
+
+        // thêm dấu chấm trung tâm + tooltip nhỏ
+        const marker = L.circleMarker(conf.center, {radius:3, color:'#0f172a', weight:1, fillOpacity:0.8});
+        marker.bindTooltip(label, {permanent:false, direction:'top'});
+        marker.on('click', () => openModal('Vietnam'));
+        group.addLayer(marker);
+      });
+      group.addTo(map);
+      return group;
+    }
+
     (async function init(){
       showStatus('Đang tải dữ liệu biên giới...');
       const sources = [
         'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson',
         'https://cdn.jsdelivr.net/gh/datasets/geo-countries@master/data/countries.geojson',
-        'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json'
+        'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geojson'
       ];
       let geo=null;
       for (const url of sources){
@@ -133,7 +171,6 @@
         catch(e){ showStatus('Thiếu cả asean.geojson. Upload file đó vào repo nhé.', true); return; }
       }
 
-      // Lọc theo ISO_A3 để tránh lệch tên
       const all = (geo.features||[]);
       const feats = all.filter(f => ISO2NAME.has(codeOf(f.properties || {}, f)));
 
@@ -168,12 +205,17 @@
         }
       }).addTo(map);
 
-      map.fitBounds(window.geoLayer.getBounds(), { padding:[20,20] });
+      // Thêm khung ước lệ cho hai quần đảo
+      const archGroup = addArchipelagoBoxes(map);
 
-      // Đóng modal khi click ra vùng trống trên bản đồ
+      // Fit map để nhìn thấy cả phần đất liền và hai quần đảo
+      const bounds = window.geoLayer.getBounds().extend(archGroup.getBounds());
+      map.fitBounds(bounds, { padding:[20,20] });
+
+      // Đóng modal khi click ra vùng trống
       map.on('click', () => closeModal());
 
-      showStatus('Tải xong. Click vào quốc gia để xem thông tin.');
+      showStatus('Tải xong. Click quốc gia hoặc khung quần đảo để xem thông tin.');
       setTimeout(()=> STATUS.style.display='none', 2500);
     })();
   </script>
