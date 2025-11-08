@@ -3,48 +3,136 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ASEAN — Tương tác (offline, đảm bảo hiển thị)</title>
+  <title>Bản đồ Đông Nam Á — 1 file duy nhất</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="./style.css" />
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;padding:0;height:100%}
+    :root{--bg:#f1f5f9;--card:#ffffff;--ink:#0f172a;--muted:#64748b;--accent:#22c55e;--blue:#60a5fa;--stroke:#1e3a8a;--shadow:0 10px 30px rgba(2,6,23,.15)}
+    body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+    header{padding:20px 16px;text-align:center}
+    header h1{margin:0;font-size:26px}
+    .subtitle{color:var(--muted);margin-top:6px}
+    main{height:calc(100% - 120px);padding:0 16px 20px;position:relative}
+    #map{height:100%;width:100%;border:1px solid #cbd5e1;border-radius:14px;box-shadow:var(--shadow);background:#fff}
+    .status{position:absolute;left:20px;bottom:26px;background:#111827;color:#fff;padding:8px 12px;border-radius:8px;opacity:.9;max-width:70%;font-size:12px;display:none}
+    footer{padding:12px;text-align:center;color:var(--muted)}
+    .modal.hidden{display:none}
+    .modal{position:fixed;inset:0;display:grid;place-items:center;z-index:10000}
+    .modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+    .modal__dialog{position:relative;background:#fff;border-radius:16px;box-shadow:var(--shadow);width:min(90vw,520px);padding:20px 20px 24px;animation:pop .18s ease-out}
+    .modal__title{margin:4px 0 12px 0;color:var(--accent);font-size:22px}
+    .modal__close{position:absolute;right:10px;top:6px;border:0;background:transparent;font-size:28px;line-height:1;cursor:pointer}
+    @keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+  </style>
 </head>
 <body>
-  <header class="site-header">
-    <h1>Bản đồ ASEAN — Tương tác (Offline)</h1>
-    <p class="subtitle">Dữ liệu GeoJSON đã nhúng sẵn (hình chữ nhật đại diện từng nước để đảm bảo hiển thị)</p>
+  <header>
+    <h1>BẢN ĐỒ ĐÔNG NAM Á — BIÊN GIỚI THẬT</h1>
+    <p class="subtitle">Click vào quốc gia để nảy lên và xem thông tin</p>
   </header>
 
-  <main class="layout">
-    <div class="toolbar">
-      <input id="search" placeholder="Tìm quốc gia..." />
-      <button id="resetBtn">Reset view</button>
-    </div>
-    <div id="map"></div>
-    <aside class="panel" id="panel">
-      <div class="panel-section">
-        <div class="badge">THÔNG TIN</div>
-        <h2 id="info-name" class="country-name">—</h2>
-        <p><strong>Thủ đô:</strong> <span id="info-capital">—</span></p>
-        <p><strong>Dân số:</strong> <span id="info-population">—</span></p>
-        <p><strong>Diện tích:</strong> <span id="info-area">—</span></p>
-        <p><strong>GDP (nominal):</strong> <span id="info-gdp">—</span></p>
-        <p><strong>Tiền tệ:</strong> <span id="info-currency">—</span></p>
-        <p><strong>Ngôn ngữ chính:</strong> <span id="info-language">—</span></p>
-        <p><strong>Văn hoá/ghi chú:</strong> <span id="info-culture">—</span></p>
-      </div>
-      <div class="panel-section tip">
-        Gợi ý: gõ tên nước để zoom, bấm polygon để xem thông tin.
-      </div>
-    </aside>
+  <main>
+    <div id="map" role="img" aria-label="Bản đồ Đông Nam Á"></div>
+    <div id="status" class="status"></div>
   </main>
 
-  <footer class="site-footer">
-    <span>Chạy khi mở file trực tiếp • Deploy GitHub Pages đều OK</span>
-  </footer>
+  <div id="modal" class="modal hidden" aria-hidden="true">
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="modal__close" title="Đóng" aria-label="Đóng" data-close>&times;</button>
+      <h2 id="modal-title" class="modal__title"></h2>
+      <div class="modal__body">
+        <p><strong>Dân số:</strong> <span id="info-population"></span></p>
+        <p><strong>Ngôn ngữ:</strong> <span id="info-language"></span></p>
+        <p><strong>Văn hoá:</strong> <span id="info-culture"></span></p>
+      </div>
+    </div>
+  </div>
 
-  <div id="status" class="status">Đang tải…</div>
+  <footer>Deploy thẳng GitHub Pages • 1 file duy nhất</footer>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>window.__ASEAN_GEOJSON__ = {"type": "FeatureCollection", "features": [{"type": "Feature", "properties": {"NAME_0": "Vietnam"}, "geometry": {"type": "Polygon", "coordinates": [[[102.0, 8.5], [110.5, 8.5], [110.5, 23.5], [102.0, 23.5], [102.0, 8.5]]]}}, {"type": "Feature", "properties": {"NAME_0": "Thailand"}, "geometry": {"type": "Polygon", "coordinates": [[[97.0, 5.5], [106.0, 5.5], [106.0, 20.5], [97.0, 20.5], [97.0, 5.5]]]}}, {"type": "Feature", "properties": {"NAME_0": "Laos"}, "geometry": {"type": "Polygon", "coordinates": [[[100.0, 14.0], [107.8, 14.0], [107.8, 22.8], [100.0, 22.8], [100.0, 14.0]]]}}, {"type": "Feature", "properties": {"NAME_0": "Cambodia"}, "geometry": {"type": "Polygon", "coordinates": [[[102.0, 10.2], [107.8, 10.2], [107.8, 14.8], [102.0, 14.8], [102.0, 10.2]]]}}, {"type": "Feature", "properties": {"NAME_0": "Myanmar"}, "geometry": {"type": "Polygon", "coordinates": [[[92.0, 10.0], [101.5, 10.0], [101.5, 28.5], [92.0, 28.5], [92.0, 10.0]]]}}, {"type": "Feature", "properties": {"NAME_0": "Malaysia"}, "geometry": {"type": "Polygon", "coordinates": [[[99.0, 1.0], [119.0, 1.0], [119.0, 7.5], [99.0, 7.5], [99.0, 1.0]]]}}, {"type": "Feature", "properties": {"NAME_0": "Singapore"}, "geometry": {"type": "Polygon", "coordinates": [[[103.6, 1.18], [104.0, 1.18], [104.0, 1.5], [103.6, 1.5], [103.6, 1.18]]]}}, {"type": "Feature", "properties": {"NAME_0": "Indonesia"}, "geometry": {"type": "Polygon", "coordinates": [[[95.0, -11.0], [141.0, -11.0], [141.0, 6.0], [95.0, 6.0], [95.0, -11.0]]]}}, {"type": "Feature", "properties": {"NAME_0": "Philippines"}, "geometry": {"type": "Polygon", "coordinates": [[[117.0, 5.0], [126.0, 5.0], [126.0, 19.0], [117.0, 19.0], [117.0, 5.0]]]}}, {"type": "Feature", "properties": {"NAME_0": "Brunei"}, "geometry": {"type": "Polygon", "coordinates": [[[114.0, 4.0], [115.5, 4.0], [115.5, 5.2], [114.0, 5.2], [114.0, 4.0]]]}}, {"type": "Feature", "properties": {"NAME_0": "Timor-Leste"}, "geometry": {"type": "Polygon", "coordinates": [[[124.0, -10.0], [127.0, -10.0], [127.0, -8.0], [124.0, -8.0], [124.0, -10.0]]]}}]};</script>
-  <script src="./script.js"></script>
+  <script>
+    const STATUS = document.getElementById('status');
+    function showStatus(msg, isErr=false){ STATUS.textContent = msg; STATUS.style.display='block'; STATUS.style.background = isErr ? '#7f1d1d' : '#111827'; }
+    const ASEAN = new Set(['Vietnam','Thailand','Laos','Cambodia','Myanmar','Malaysia','Singapore','Indonesia','Philippines','Brunei','Timor-Leste']);
+    const INFO = { Vietnam:{population:'~100 triệu',language:'Tiếng Việt',culture:'Á Đông + Pháp'},
+    Thailand:{population:'~71 triệu',language:'Tiếng Thái',culture:'Phật giáo, hoàng gia'},
+    Laos:{population:'~7.6 triệu',language:'Tiếng Lào',culture:'Theravada'},
+    Cambodia:{population:'~17 triệu',language:'Khmer',culture:'Angkor'},
+    Myanmar:{population:'~55 triệu',language:'Burmese',culture:'Đa dân tộc'},
+    Malaysia:{population:'~34 triệu',language:'Bahasa',culture:'Hồi giáo, đa tộc'},
+    Singapore:{population:'~6 triệu',language:'Anh/Hoa/ML/Tamil',culture:'Đa văn hoá'},
+    Indonesia:{population:'~280 triệu',language:'Bahasa',culture:'Quần đảo đa ngữ'},
+    Philippines:{population:'~115 triệu',language:'Filipino/Anh',culture:'TBN + Mỹ'},
+    Brunei:{population:'~0.45 triệu',language:'Malay',culture:'Hồi giáo'},
+    'Timor-Leste':{population:'~1.4 triệu',language:'Tetum/Bồ',culture:'Đông Timor'}, };
+
+    const map = L.map('map');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);
+
+    function nameOf(props){ return props.ADMIN || props.NAME || props.NAME_EN || props.name || props.sovereignt; }
+    function baseStyle(){ return { color:'#1e3a8a', weight:1.2, fillColor:'#60a5fa', fillOpacity:0.7 }; }
+    function activeStyle(){ return { color:'#14532d', weight:1.5, fillColor:'#22c55e', fillOpacity:0.95 }; }
+
+    function openModal(name){
+      const m = INFO[name] || {population:'—', language:'—', culture:'—'};
+      document.getElementById('modal-title').textContent = name;
+      document.getElementById('info-population').textContent = m.population;
+      document.getElementById('info-language').textContent = m.language;
+      document.getElementById('info-culture').textContent = m.culture;
+      const modal = document.getElementById('modal');
+      modal.classList.remove('hidden'); modal.setAttribute('aria-hidden','false');
+    }
+    function closeModal(){
+      const modal = document.getElementById('modal');
+      modal.classList.add('hidden'); modal.setAttribute('aria-hidden','true');
+      if (window.geoLayer) window.geoLayer.eachLayer(l => { l.setStyle(baseStyle()); l._active=false; });
+    }
+    document.addEventListener('click', e => { if (e.target.matches('[data-close]')) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    async function tryFetch(url){
+      const r = await fetch(url, {mode:'cors'});
+      if (!r.ok) throw new Error('HTTP '+r.status); return r.json();
+    }
+
+    (async function init(){
+      showStatus('Đang tải dữ liệu biên giới...');
+      const sources = [
+        'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson',
+        'https://cdn.jsdelivr.net/gh/datasets/geo-countries@master/data/countries.geojson',
+        'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json'
+      ];
+      let geo=null;
+      for (const url of sources){
+        try { geo = await tryFetch(url); showStatus('Tải từ: '+url); break; }
+        catch(e){ /* try next */ }
+      }
+      if (!geo){ showStatus('Không tải được GeoJSON từ internet. Dùng file local: asean.geojson', true);
+        try { const local = await tryFetch('./asean.geojson'); geo = local; }
+        catch(e){ showStatus('Thiếu cả asean.geojson. Upload file đó vào repo nhé.', true); return; }
+      }
+      const feats = (geo.features||[]).filter(f => ASEAN.has(nameOf(f.properties)));
+      if (!feats.length){ showStatus('GeoJSON không có ASEAN. Hãy cung cấp asean.geojson đã lọc.', true); return; }
+      window.geoLayer = L.geoJSON({type:'FeatureCollection', features:feats}, {
+        style: baseStyle,
+        onEachFeature: (feature, layer) => {
+          const name = nameOf(feature.properties);
+          layer.bindTooltip(name, {sticky:true, opacity:0.9});
+          layer.on('click', () => {
+            window.geoLayer.eachLayer(l => { l.setStyle(baseStyle()); l._active=false; });
+            layer.setStyle(activeStyle()); layer._active=true; if (layer.bringToFront) layer.bringToFront();
+            openModal(name);
+          });
+          layer.on('mouseover', ()=>{ if (!layer._active) layer.setStyle({ fillOpacity: 0.85 }); });
+          layer.on('mouseout',  ()=>{ if (!layer._active) layer.setStyle({ fillOpacity: 0.7  }); });
+        }
+      }).addTo(map);
+      map.fitBounds(window.geoLayer.getBounds(), { padding:[20,20] });
+      showStatus('Tải xong. Click vào quốc gia để xem thông tin.');
+      setTimeout(()=> STATUS.style.display='none', 2500);
+    })();
+  </script>
 </body>
 </html>
