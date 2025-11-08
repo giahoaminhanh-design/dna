@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bản đồ Đông Nam Á — 1 file duy nhất</title>
+  <title>Bản đồ ASEAN — 1 file duy nhất (nhúng GeoJSON)</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     *{box-sizing:border-box}html,body{margin:0;padding:0;height:100%}
-    :root{--bg:#f1f5f9;--card:#ffffff;--ink:#0f172a;--muted:#64748b;--accent:#22c55e;--blue:#60a5fa;--stroke:#1e3a8a;--shadow:0 10px 30px rgba(2,6,23,.15)}
+    :root{--bg:#eef3f8;--ink:#0f172a;--muted:#64748b;--accent:#22c55e;--blue:#60a5fa;--stroke:#1e3a8a;--shadow:0 10px 30px rgba(2,6,23,.12)}
     body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
     header{padding:20px 16px;text-align:center}
     header h1{margin:0;font-size:26px}
@@ -15,7 +15,6 @@
     main{height:calc(100% - 120px);padding:0 16px 20px;position:relative}
     #map{height:100%;width:100%;border:1px solid #cbd5e1;border-radius:14px;box-shadow:var(--shadow);background:#fff}
     .status{position:absolute;left:20px;bottom:26px;background:#111827;color:#fff;padding:8px 12px;border-radius:8px;opacity:.9;max-width:70%;font-size:12px;display:none}
-    footer{padding:12px;text-align:center;color:var(--muted)}
     .modal.hidden{display:none}
     .modal{position:fixed;inset:0;display:grid;place-items:center;z-index:10000}
     .modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}
@@ -27,15 +26,13 @@
 </head>
 <body>
   <header>
-    <h1>BẢN ĐỒ ĐÔNG NAM Á — BIÊN GIỚI THẬT</h1>
-    <p class="subtitle">Click vào quốc gia để nảy lên và xem thông tin</p>
+    <h1>BẢN ĐỒ ASEAN — 1 FILE</h1>
+    <p class="subtitle">GeoJSON đã <strong>nhúng trực tiếp</strong> vào trang; không cần fetch, tránh lỗi 404/CORS.</p>
   </header>
-
   <main>
     <div id="map" role="img" aria-label="Bản đồ Đông Nam Á"></div>
     <div id="status" class="status" role="status" aria-live="polite"></div>
   </main>
-
   <div id="modal" class="modal hidden" aria-hidden="true">
     <div class="modal__backdrop" data-close></div>
     <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -48,15 +45,13 @@
       </div>
     </div>
   </div>
-
-  <footer>Deploy thẳng GitHub Pages • 1 trang HTML</footer>
-
+  <script id="asean-data" type="application/json">{"type": "FeatureCollection", "features": []}</script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const STATUS = document.getElementById('status');
     function showStatus(msg, isErr=false){ STATUS.textContent = msg; STATUS.style.display='block'; STATUS.style.background = isErr ? '#7f1d1d' : '#111827'; }
+    function hideStatus(){ STATUS.style.display='none'; }
 
-    // Thông tin hiển thị
     const INFO = {
       Vietnam:{population:'~100 triệu',language:'Tiếng Việt',culture:'Á Đông + Pháp'},
       Thailand:{population:'~71 triệu',language:'Tiếng Thái',culture:'Phật giáo, hoàng gia'},
@@ -70,111 +65,90 @@
       Brunei:{population:'~0.45 triệu',language:'Malay',culture:'Hồi giáo'},
       'Timor-Leste':{population:'~1.4 triệu',language:'Tetum/Bồ',culture:'Đông Timor'}
     };
-
-    // Ánh xạ ISO_A3 -> tên hiển thị (khớp với keys của INFO)
     const ISO2NAME = new Map([
       ['VNM','Vietnam'], ['THA','Thailand'], ['LAO','Laos'], ['KHM','Cambodia'],
       ['MMR','Myanmar'], ['MYS','Malaysia'], ['SGP','Singapore'], ['IDN','Indonesia'],
       ['PHL','Philippines'], ['BRN','Brunei'], ['TLS','Timor-Leste']
     ]);
+    const NAME_ALIASES = new Map(Object.entries({
+      'vietnam':'Vietnam','viet nam':'Vietnam',
+      'thailand':'Thailand',
+      'laos':'Laos','lao pdr':'Laos','lao peoples democratic republic':'Laos',"lao people's democratic republic":'Laos',
+      'cambodia':'Cambodia','kingdom of cambodia':'Cambodia',
+      'myanmar':'Myanmar','burma':'Myanmar',
+      'malaysia':'Malaysia',
+      'singapore':'Singapore',
+      'indonesia':'Indonesia',
+      'philippines':'Philippines',
+      'brunei':'Brunei','brunei darussalam':'Brunei',
+      'timor-leste':'Timor-Leste','timor leste':'Timor-Leste','east timor':'Timor-Leste'
+    }));
+    function normalize(s){ return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' '); }
+    function codeOf(p,f){ return p.ISO_A3 || p.iso_a3 || p.ADM0_A3 || (f && f.id) || p.id || p.ISO3; }
+    function pickName(p){ return p && (p.ADMIN || p.NAME || p.NAME_LONG || p.NAME_EN || p.name || p.sovereignt || p.official_name || p.official || p.country || p.country_en); }
+    function displayName(p,f){ const c=codeOf(p,f); return ISO2NAME.get(c)||NAME_ALIASES.get(normalize(pickName(p)))||pickName(p)||'—'; }
 
     const map = L.map('map');
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);
-
     function baseStyle(){ return { color:'#1e3a8a', weight:1.2, fillColor:'#60a5fa', fillOpacity:0.7 }; }
     function activeStyle(){ return { color:'#14532d', weight:1.5, fillColor:'#22c55e', fillOpacity:0.95 }; }
+    function openModal(name){ const m=INFO[name]||{population:'—',language:'—',culture:'—'}; 
+      document.getElementById('modal-title').textContent=name;
+      document.getElementById('info-population').textContent=m.population;
+      document.getElementById('info-language').textContent=m.language;
+      document.getElementById('info-culture').textContent=m.culture;
+      const modal=document.getElementById('modal'); modal.classList.remove('hidden'); modal.setAttribute('aria-hidden','false'); }
+    function closeModal(){ const modal=document.getElementById('modal'); modal.classList.add('hidden'); modal.setAttribute('aria-hidden','true');
+      if (window.geoLayer) window.geoLayer.eachLayer(l=>{l.setStyle(baseStyle()); l._active=false;}); }
+    document.addEventListener('click', e=>{ if(e.target.matches('[data-close]')) closeModal(); });
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
 
-    // Helpers để bền vững giữa các nguồn dữ liệu
-    function codeOf(props, feature){
-      return props.ISO_A3 || props.iso_a3 || props.ADM0_A3 || (feature && feature.id) || props.id || props.ISO3;
-    }
-    function displayName(props, feature){
-      const code = codeOf(props, feature);
-      return ISO2NAME.get(code) || (props.ADMIN || props.NAME || props.NAME_EN || props.name || props.sovereignt);
-    }
+    // Archipelago boxes (ước lệ)
+    const ARCHIPELAGO_BOXES = {
+      "Quần đảo Hoàng Sa": { polygon: [[[111.0,16.0],[113.5,16.0],[113.5,17.8],[111.0,17.8],[111.0,16.0]]], center:[16.9,112.2] },
+      "Quần đảo Trường Sa": { polygon: [[[111.0,7.0],[118.0,7.0],[118.0,12.5],[111.0,12.5],[111.0,7.0]]], center:[10.0,114.5] }
+    };
+    function addArchipelagoBoxes(map){ const g=L.featureGroup();
+      Object.entries(ARCHIPELAGO_BOXES).forEach(([label,c])=>{
+        const poly=L.polygon(c.polygon,{color:'#0f172a',weight:1.2,fillColor:'#94a3b8',fillOpacity:0.15,dashArray:'6 4'}).bindTooltip(label+' (ước lệ)',{sticky:true,opacity:0.9});
+        poly.on('click',()=>openModal('Vietnam')); g.addLayer(poly);
+        const m=L.circleMarker(c.center,{radius:3,color:'#0f172a',weight:1,fillOpacity:0.8}).bindTooltip(label); m.on('click',()=>openModal('Vietnam')); g.addLayer(m);
+      }); g.addTo(map); return g; }
 
-    function openModal(name){
-      const m = INFO[name] || {population:'—', language:'—', culture:'—'};
-      document.getElementById('modal-title').textContent = name;
-      document.getElementById('info-population').textContent = m.population;
-      document.getElementById('info-language').textContent = m.language;
-      document.getElementById('info-culture').textContent = m.culture;
-      const modal = document.getElementById('modal');
-      modal.classList.remove('hidden'); modal.setAttribute('aria-hidden','false');
-    }
-    function closeModal(){
-      const modal = document.getElementById('modal');
-      modal.classList.add('hidden'); modal.setAttribute('aria-hidden','true');
-      if (window.geoLayer) window.geoLayer.eachLayer(l => { l.setStyle(baseStyle()); l._active=false; });
-    }
-    document.addEventListener('click', e => { if (e.target.matches('[data-close]')) closeModal(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
-    async function tryFetch(url){
-      const r = await fetch(url, {mode:'cors'});
-      if (!r.ok) throw new Error('HTTP '+r.status); return r.json();
-    }
-
-    (async function init(){
-      showStatus('Đang tải dữ liệu biên giới...');
-      const sources = [
-        'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson',
-        'https://cdn.jsdelivr.net/gh/datasets/geo-countries@master/data/countries.geojson',
-        'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json'
-      ];
-      let geo=null;
-      for (const url of sources){
-        try { geo = await tryFetch(url); showStatus('Tải từ: '+url); break; }
-        catch(e){ /* thử nguồn tiếp theo */ }
+    (function init(){
+      showStatus('Đang render dữ liệu nhúng...');
+      const el=document.getElementById('asean-data');
+      let geo=null; try{ geo=JSON.parse(el.textContent); }catch(_){
+        showStatus('Dữ liệu nhúng không phải JSON hợp lệ.', true); return;
       }
-      if (!geo){
-        showStatus('Không tải được GeoJSON từ internet. Dùng file local: asean.geojson', true);
-        try { const local = await tryFetch('./asean.geojson'); geo = local; }
-        catch(e){ showStatus('Thiếu cả asean.geojson. Upload file đó vào repo nhé.', true); return; }
-      }
+      const all=(geo && geo.features)||[];
+      // 1) ISO3
+      let feats=all.filter(f=>ISO2NAME.has(codeOf(f.properties||{},f)));
+      // 2) fallback tên
+      if(!feats.length){ feats=all.filter(f=>NAME_ALIASES.has(normalize(pickName(f.properties||{})))); }
+      // 3) nếu file nhỏ (<=20) thì lấy toàn bộ
+      if(!feats.length && all.length && all.length<=20){ feats=all; }
 
-      // Lọc theo ISO_A3 để tránh lệch tên
-      const all = (geo.features||[]);
-      const feats = all.filter(f => ISO2NAME.has(codeOf(f.properties || {}, f)));
+      if(!feats.length){ showStatus('Không nhận diện được dữ liệu ASEAN trong GeoJSON nhúng.', true); return; }
 
-      if (!feats.length){
-        showStatus('GeoJSON không có các mã ISO của ASEAN. Hãy cung cấp asean.geojson đã lọc.', true);
-        return;
-      }
-
-      window.geoLayer = L.geoJSON({type:'FeatureCollection', features:feats}, {
+      window.geoLayer=L.geoJSON({type:'FeatureCollection',features:feats}, {
         style: baseStyle,
         onEachFeature: (feature, layer) => {
-          const label = displayName(feature.properties || {}, feature);
-          layer.bindTooltip(label, {sticky:true, opacity:0.9});
-          layer.on('click', () => {
-            window.geoLayer.eachLayer(l => { l.setStyle(baseStyle()); l._active=false; });
-            layer.setStyle(activeStyle()); layer._active=true; if (layer.bringToFront) layer.bringToFront();
-            openModal(label);
-          });
-          layer.on('mouseover', ()=>{ if (!layer._active) layer.setStyle({ fillOpacity: 0.85 }); });
-          layer.on('mouseout',  ()=>{ if (!layer._active) layer.setStyle({ fillOpacity: 0.7  }); });
-
-          // A11y: cho phép Tab + Enter/Space để mở modal
-          layer.once('add', () => {
-            const el = layer.getElement(); if (!el) return;
-            el.setAttribute('tabindex','0');
-            el.setAttribute('role','button');
-            el.setAttribute('aria-label', label);
-            el.addEventListener('keydown', (ev) => {
-              if (ev.key === 'Enter' || ev.key === ' ') { layer.fire('click'); }
-            });
-          });
+          const label=displayName(feature.properties||{},feature);
+          layer.bindTooltip(label,{sticky:true,opacity:0.9});
+          layer.on('click',()=>{ window.geoLayer.eachLayer(l=>{l.setStyle(baseStyle()); l._active=false;}); layer.setStyle(activeStyle()); layer._active=true; if(layer.bringToFront) layer.bringToFront(); openModal(label); });
+          layer.on('mouseover',()=>{ if(!layer._active) layer.setStyle({fillOpacity:0.85}); });
+          layer.on('mouseout',()=>{ if(!layer._active) layer.setStyle({fillOpacity:0.7}); });
+          layer.once('add',()=>{ const e=layer.getElement(); if(!e) return; e.setAttribute('tabindex','0'); e.setAttribute('role','button'); e.setAttribute('aria-label',label);
+            e.addEventListener('keydown',ev=>{ if(ev.key==='Enter'||ev.key===' ') layer.fire('click'); }); });
         }
       }).addTo(map);
 
-      map.fitBounds(window.geoLayer.getBounds(), { padding:[20,20] });
-
-      // Đóng modal khi click ra vùng trống trên bản đồ
-      map.on('click', () => closeModal());
-
-      showStatus('Tải xong. Click vào quốc gia để xem thông tin.');
-      setTimeout(()=> STATUS.style.display='none', 2500);
+      const arch=addArchipelagoBoxes(map);
+      const bounds=window.geoLayer.getBounds().extend(arch.getBounds());
+      map.fitBounds(bounds,{padding:[20,20]});
+      map.on('click',()=>closeModal());
+      showStatus('Xong! Click để xem thông tin.'); setTimeout(hideStatus, 2200);
     })();
   </script>
 </body>
