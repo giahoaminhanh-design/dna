@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bản đồ Đông Nam Á — có Hoàng Sa & Trường Sa</title>
+  <title>Bản đồ Đông Nam Á — robust (ISO3 + fallback tên) | có Hoàng Sa & Trường Sa</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     *{box-sizing:border-box}html,body{margin:0;padding:0;height:100%}
@@ -28,8 +28,8 @@
 </head>
 <body>
   <header>
-    <h1>BẢN ĐỒ ĐÔNG NAM Á — CÓ HIỂN THỊ QUẦN ĐẢO</h1>
-    <p class="subtitle">Click vào quốc gia để nảy lên. Khu vực Hoàng Sa & Trường Sa được khoanh nét đứt (mang tính minh hoạ).</p>
+    <h1>BẢN ĐỒ ĐÔNG NAM Á — ROBUST</h1>
+    <p class="subtitle">Lọc theo ISO_A3; nếu thiếu thì fallback theo tên (đa biến thể). Có khung ước lệ Hoàng Sa & Trường Sa.</p>
   </header>
 
   <main>
@@ -57,6 +57,7 @@
   <script>
     const STATUS = document.getElementById('status');
     function showStatus(msg, isErr=false){ STATUS.textContent = msg; STATUS.style.display='block'; STATUS.style.background = isErr ? '#7f1d1d' : '#111827'; }
+    function hideStatus(){ STATUS.style.display='none'; }
 
     // Thông tin hiển thị
     const INFO = {
@@ -80,6 +81,21 @@
       ['PHL','Philippines'], ['BRN','Brunei'], ['TLS','Timor-Leste']
     ]);
 
+    // Fallback theo tên (đa biến thể)
+    const NAME_ALIASES = new Map(Object.entries({
+      'vietnam':'Vietnam','viet nam':'Vietnam','vn':'Vietnam',
+      'thailand':'Thailand','kingdom of thailand':'Thailand',
+      'laos':'Laos','lao pdr':'Laos','lao people\'s democratic republic':'Laos','lao peoples democratic republic':'Laos','lao':'Laos',
+      'cambodia':'Cambodia','kingdom of cambodia':'Cambodia','khmer':'Cambodia',
+      'myanmar':'Myanmar','burma':'Myanmar','republic of the union of myanmar':'Myanmar',
+      'malaysia':'Malaysia',
+      'singapore':'Singapore','republic of singapore':'Singapore',
+      'indonesia':'Indonesia','republic of indonesia':'Indonesia',
+      'philippines':'Philippines','republic of the philippines':'Philippines',
+      'brunei':'Brunei','brunei darussalam':'Brunei','state of brunei darussalam':'Brunei',
+      'timor-leste':'Timor-Leste','timor leste':'Timor-Leste','east timor':'Timor-Leste','democratic republic of timor-leste':'Timor-Leste'
+    }));
+
     const map = L.map('map');
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);
 
@@ -90,9 +106,15 @@
     function codeOf(props, feature){
       return props.ISO_A3 || props.iso_a3 || props.ADM0_A3 || (feature && feature.id) || props.id || props.ISO3;
     }
+    function pickName(props){
+      return props && (props.ADMIN || props.NAME || props.NAME_LONG || props.NAME_EN || props.name || props.sovereignt || props.official_name || props.official || props.country || props.country_en);
+    }
+    function normalize(s){
+      return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' ');
+    }
     function displayName(props, feature){
       const code = codeOf(props, feature);
-      return ISO2NAME.get(code) || (props.ADMIN || props.NAME || props.NAME_EN || props.name || props.sovereignt);
+      return ISO2NAME.get(code) || NAME_ALIASES.get(normalize(pickName(props))) || pickName(props) || '—';
     }
 
     function openModal(name){
@@ -118,32 +140,23 @@
     }
 
     // === Vẽ khung ước lệ cho Hoàng Sa, Trường Sa (dạng polygon nét đứt) ===
-    // Toạ độ xấp xỉ (lon, lat), thể hiện phạm vi minh hoạ để người dùng thấy trên bản đồ.
     const ARCHIPELAGO_BOXES = {
       "Quần đảo Hoàng Sa": {
-        polygon: [[
-          [111.0, 16.0],[113.5, 16.0],[113.5, 17.8],[111.0, 17.8],[111.0, 16.0]
-        ]],
+        polygon: [[ [111.0, 16.0],[113.5, 16.0],[113.5, 17.8],[111.0, 17.8],[111.0, 16.0] ]],
         center: [16.9, 112.2]
       },
       "Quần đảo Trường Sa": {
-        polygon: [[
-          [111.0, 7.0],[118.0, 7.0],[118.0, 12.5],[111.0, 12.5],[111.0, 7.0]
-        ]],
+        polygon: [[ [111.0, 7.0],[118.0, 7.0],[118.0, 12.5],[111.0, 12.5],[111.0, 7.0] ]],
         center: [10.0, 114.5]
       }
     };
-
     function addArchipelagoBoxes(map){
       const group = L.featureGroup();
       Object.entries(ARCHIPELAGO_BOXES).forEach(([label, conf]) => {
-        const layer = L.polygon(conf.polygon, {
-          color:'#0f172a', weight:1.2, fillColor:'#94a3b8', fillOpacity:0.15, dashArray:'6 4'
-        }).bindTooltip(label + ' (ước lệ)', {sticky:true, opacity:0.9});
-        layer.on('click', () => openModal('Vietnam')); // click vào sẽ mở thông tin Việt Nam
+        const layer = L.polygon(conf.polygon, { color:'#0f172a', weight:1.2, fillColor:'#94a3b8', fillOpacity:0.15, dashArray:'6 4' })
+          .bindTooltip(label + ' (ước lệ)', {sticky:true, opacity:0.9});
+        layer.on('click', () => openModal('Vietnam'));
         group.addLayer(layer);
-
-        // thêm dấu chấm trung tâm + tooltip nhỏ
         const marker = L.circleMarker(conf.center, {radius:3, color:'#0f172a', weight:1, fillOpacity:0.8});
         marker.bindTooltip(label, {permanent:false, direction:'top'});
         marker.on('click', () => openModal('Vietnam'));
@@ -158,24 +171,41 @@
       const sources = [
         'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson',
         'https://cdn.jsdelivr.net/gh/datasets/geo-countries@master/data/countries.geojson',
-        'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geojson'
+        'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geojson',
       ];
-      let geo=null;
+      let geo=null, used='internet';
       for (const url of sources){
-        try { geo = await tryFetch(url); showStatus('Tải từ: '+url); break; }
+        try { geo = await tryFetch(url); showStatus('Tải từ: '+url); used = url; break; }
         catch(e){ /* thử nguồn tiếp theo */ }
       }
       if (!geo){
         showStatus('Không tải được GeoJSON từ internet. Dùng file local: asean.geojson', true);
-        try { const local = await tryFetch('./asean.geojson'); geo = local; }
+        try { const local = await tryFetch('./asean.geojson'); geo = local; used='local'; }
         catch(e){ showStatus('Thiếu cả asean.geojson. Upload file đó vào repo nhé.', true); return; }
       }
 
       const all = (geo.features||[]);
-      const feats = all.filter(f => ISO2NAME.has(codeOf(f.properties || {}, f)));
+      // 1) Lọc theo ISO3
+      let feats = all.filter(f => ISO2NAME.has(codeOf(f.properties || {}, f)));
+
+      // 2) Nếu rỗng, fallback theo tên (đa biến thể)
+      if (!feats.length){
+        feats = all.filter(f => {
+          const p = f.properties || {};
+          const n = normalize(pickName(p));
+          return NAME_ALIASES.has(n);
+        });
+        if (feats.length) showStatus('Nguồn "'+used+'" thiếu ISO3. Đã fallback theo tên quốc gia.', true);
+      }
+
+      // 3) Nếu vẫn rỗng nhưng tổng số feature nhỏ (<=20), assume file đã là ASEAN subset
+      if (!feats.length && all.length && all.length <= 20){
+        feats = all;
+        showStatus('Không nhận diện được tên/ISO3. Dùng toàn bộ features trong file (<=20) như ASEAN.', true);
+      }
 
       if (!feats.length){
-        showStatus('GeoJSON không có các mã ISO của ASEAN. Hãy cung cấp asean.geojson đã lọc.', true);
+        showStatus('GeoJSON không khớp ASEAN (thiếu ISO3 & tên). Cần cung cấp asean.geojson đã lọc.', true);
         return;
       }
 
@@ -195,12 +225,8 @@
           // A11y: cho phép Tab + Enter/Space để mở modal
           layer.once('add', () => {
             const el = layer.getElement(); if (!el) return;
-            el.setAttribute('tabindex','0');
-            el.setAttribute('role','button');
-            el.setAttribute('aria-label', label);
-            el.addEventListener('keydown', (ev) => {
-              if (ev.key === 'Enter' || ev.key === ' ') { layer.fire('click'); }
-            });
+            el.setAttribute('tabindex','0'); el.setAttribute('role','button'); el.setAttribute('aria-label', label);
+            el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { layer.fire('click'); } });
           });
         }
       }).addTo(map);
@@ -216,7 +242,7 @@
       map.on('click', () => closeModal());
 
       showStatus('Tải xong. Click quốc gia hoặc khung quần đảo để xem thông tin.');
-      setTimeout(()=> STATUS.style.display='none', 2500);
+      setTimeout(hideStatus, 2500);
     })();
   </script>
 </body>
