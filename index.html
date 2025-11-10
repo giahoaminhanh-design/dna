@@ -133,6 +133,44 @@
       Brunei:        '#0ea5e9', // xanh biển
       'Timor-Leste': '#db2777'  // hồng đậm
 };
+// ===== ÂM THANH CHO TỪNG QUỐC GIA =====
+const AUDIO = {
+  "Brunei":        "audio/Brunei.mp3",
+  "Cambodia":      "audio/Cambodia.mp3",
+  "Indonesia":     "audio/Indonesia.mp3",
+  "Laos":          "audio/Laos.mp3",
+  "Malaysia":      "audio/Malaysia.mp3",
+  "Myanmar":       "audio/Myanmar.mp3",
+  "Philippines":   "audio/Philippines.mp3",
+  "Singapore":     "audio/Singapore.mp3",
+  "Thailand":      "audio/Thailand.mp3",
+  "Vietnam":       "audio/Vietnam.mp3",
+  // Repo của bạn dùng tên file "East Timor.mp3" nhưng map chuẩn trong code là "Timor-Leste"
+  "Timor-Leste":   "audio/East Timor.mp3"
+};
+
+let currentAudio = null;   // giữ audio hiện tại
+let isMuted = false;       // cho nút mute (tuỳ chọn)
+
+function playCountryAudio(canonName){
+  const src = AUDIO[canonName];
+  if (!src) return;
+
+  // dừng âm cũ (nếu có)
+  if (currentAudio){
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+  }
+
+  currentAudio = new Audio(src);
+  currentAudio.muted = isMuted; // tôn trọng trạng thái mute
+  currentAudio.play().catch(err => {
+    console.warn("Không phát được audio:", err);
+  });
+}
+
+// (tuỳ chọn) preload cho mượt
+Object.values(AUDIO).forEach(p => { const a = new Audio(); a.preload = "auto"; a.src = p; });
 
     const map = L.map('map');
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);
@@ -227,6 +265,8 @@ function openModal(name){
             window.geoLayer.eachLayer(l => { l.setStyle(baseStyle(l.feature)); l._active=false; });
             layer.setStyle(activeStyle(feature)); if (layer.bringToFront) layer.bringToFront();
             openModal(name);
+            playCountryAudio(canon(name));            // <<< THÊM DÒNG NÀY
+            layer._active = true; 
           });
           layer.on('mouseover', ()=>{ if (!layer._active) layer.setStyle({ fillOpacity: 0.85 }); });
           layer.on('mouseout',  ()=>{ if (!layer._active) layer.setStyle({ fillOpacity: 0.7  }); });
